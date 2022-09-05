@@ -1,0 +1,7 @@
+{
+    "model": {
+        "type": "AlexNet"
+    },
+    "pretrained": false,
+    "resume": false
+}

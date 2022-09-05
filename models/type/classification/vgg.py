@@ -19,9 +19,9 @@ def make_layers(cfg, batch_norm = False):
     
     return nn.Sequential(*layers)
 
-class VGG(nn.Module):
+class Vgg(nn.Module):
     def __init__(self,features,num_classes=1000,init_weights=True):
-        super(VGG,self).__init__()
+        super(Vgg,self).__init__()
 
         self.features = features
         self.avgpool = nn.AdaptiveAvgPool2d(7)
