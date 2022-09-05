@@ -1,0 +1,25 @@
+{
+    "model": {
+        "type": "AlexNet",
+        "backbone": {
+            "type": "AlexNet",
+            "lrn_param":[5,1e-4,0.75,2.0],
+            "pretrained": false
+        },
+        "cls_head": {
+            "type": "AlexNet_Head",
+            "dropout_ratio":0.5,
+            "num_class": 1000,
+            "loss": {
+                "type": "CrossEntropy"
+            }
+        },
+        "init_weight": true
+    },
+    "optimizer": {
+        "type": "SGD",
+        "learning_rate": 0.001,
+        "momentum": 0.9,
+        "weight_decay": 5e-4
+    }
+}

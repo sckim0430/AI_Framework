@@ -44,5 +44,5 @@ def train_sub_module(gpu_id, model_cfg, train_cfg, env_cfg):
         set_rank(env_cfg)
         init_process_group(env_cfg)
 
-    #create model
-    model_cfg["type"]
+    #create model(build)
+    

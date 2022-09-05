@@ -1,0 +1,9 @@
+{
+    "train_dir": "/home/sckim/Dataset/ILSVRC2012_img_train/ILSVRC2012_img_train",
+    "val_dir": "/home/sckim/Dataset/ILSVRC2012_img_val/",
+    "weight_dir": "/home/sckim/Weight/",
+    "dummy": false,
+    "epochs": 100,
+    "start_epoch": 0,
+    "resume": false
+}
