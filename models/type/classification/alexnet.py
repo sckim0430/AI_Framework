@@ -1,12 +1,20 @@
+"""AlexNet Class
+"""
 import torch.nn as nn
 
 
 class AlexNet(nn.Module):
+    """AlexNet Architecture
+
+    Args:
+        backbone (nn.Module) : AlexNet backbone model class
+        cls_head (nn.Module) : AlexNet classification head model class
+        init_weight (bool) : option for weight initialization
+    """
     def __init__(self, backbone, cls_head, init_weight=True):
         super(AlexNet, self).__init__()
 
         self.backbone = backbone
-        self.flatten = nn.Flatten()
         self.cls_head = cls_head
 
         if init_weight:
@@ -14,7 +22,6 @@ class AlexNet(nn.Module):
 
     def forward(self, x):
         x = self.backbone(x)
-        x = self.flatten(x)
         x, loss_cls = self.cls_head(x)
         return x, loss_cls
 
