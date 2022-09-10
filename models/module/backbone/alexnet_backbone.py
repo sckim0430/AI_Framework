@@ -3,7 +3,7 @@
 import torch.nn as nn
 
 
-class AlexNet(nn.Module):
+class AlexNet_Backbone(nn.Module):
     """AlexNet Backbone Architecture
 
     Args:
@@ -14,7 +14,7 @@ class AlexNet(nn.Module):
     """
 
     def __init__(self, in_channel=3, lrn_param=[5, 1e-4, 0.75, 1.0], pretrained=False):
-        super(AlexNet, self).__init__()
+        super(AlexNet_Backbone, self).__init__()
 
         #Setting Param
         self.in_channel = in_channel

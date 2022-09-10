@@ -16,9 +16,9 @@ def parse_args():
 
     parser = argparse.ArgumentParser(description='Pytorch Imagenet Train')
     parser.add_argument(
-        '--model_config_dir', default='/home/sckim/AI_Framework/configs/models/alexnet/alexnet.json', help='model config path')
+        '--model_config_dir', default='/home/sckim/AI_Framework/configs/classification/alexnet/alexnet.json', help='model config path')
     parser.add_argument(
-        '--train_config_dir', default='/home/sckim/AI_Framework/configs/train_config.json', help='train config path')
+        '--train_config_dir', default='/home/sckim/AI_Framework/configs/classification/train_config.json', help='train config path')
     parser.add_argument(
         '--env_config_dir', default='/home/sckim/AI_Framework/configs/env_config.json', help='environment config path')
     args = parser.parse_args()

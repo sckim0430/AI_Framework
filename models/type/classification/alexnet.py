@@ -28,8 +28,9 @@ class AlexNet(nn.Module):
     def _initialize_weights(self):
         for idx, m in enumerate(self.modules()):
             nn.init.normal(m.weight, mean=0.0, std=0.01)
-            #bias conv 2,4,5 & fc layer 1
-            if idx in []:
-                pass
-            else:
-                pass
+            m.bias = 1
+            #bias conv 2,4,5 & fc layer 1 => 1
+            # if idx in []:
+            #     pass
+            # else:
+            #     pass

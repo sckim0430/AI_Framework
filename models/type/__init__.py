@@ -1,3 +1,3 @@
-from classification import (AlexNet,Vgg)
+from classification import (AlexNet)
 
-__all__ = ['AlexNet','Vgg']
+__all__ = ['AlexNet']
