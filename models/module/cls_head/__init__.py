@@ -1,3 +1,3 @@
-from alexnet_head import AlexNet_Head
+from alexnet_head import *
 
-__all__ = [AlexNet_Head]
+__all__ = ['AlexNet_Head']

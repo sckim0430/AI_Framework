@@ -4,13 +4,14 @@ import torch.nn as nn
 
 
 class AlexNet(nn.Module):
-    """AlexNet Architecture
+    """AlexNet Architecture                                                                   
 
     Args:
         backbone (nn.Module) : AlexNet backbone model class
         cls_head (nn.Module) : AlexNet classification head model class
         init_weight (bool) : option for weight initialization
     """
+
     def __init__(self, backbone, cls_head, init_weight=True):
         super(AlexNet, self).__init__()
 
@@ -28,9 +29,8 @@ class AlexNet(nn.Module):
     def _initialize_weights(self):
         for idx, m in enumerate(self.modules()):
             nn.init.normal(m.weight, mean=0.0, std=0.01)
-            m.bias = 1
-            #bias conv 2,4,5 & fc layer 1 => 1
-            # if idx in []:
-            #     pass
-            # else:
-            #     pass
+            #bias conv 2,4,5 & fc layer 1
+            if idx in []:
+                pass
+            else:
+                pass

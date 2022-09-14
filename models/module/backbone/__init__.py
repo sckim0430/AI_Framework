@@ -1,3 +1,3 @@
-from alexnet_backbone import AlexNet_Backbone
+from alexnet_backbone import *
 
-__all__ = [AlexNet_Backbone]
+__all__ = ['AlexNet_Backbone']

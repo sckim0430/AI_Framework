@@ -1,3 +1,3 @@
-from alexnet import AlexNet
+from alexnet import *
 
 __all__ = ['AlexNet']

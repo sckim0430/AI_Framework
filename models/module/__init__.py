@@ -1,4 +1,4 @@
-from backbone import AlexNet_Backbone
-from cls_head import AlexNet_Head
+from backbone import *
+from cls_head import *
 
-__all__ = [AlexNet_Backbone, AlexNet_Head]
+__all__ = ['AlexNet_Backbone', 'AlexNet_Head']

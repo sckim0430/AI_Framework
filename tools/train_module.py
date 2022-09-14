@@ -1,6 +1,8 @@
+"""Train Module
+"""
 import torch.multiprocessing as mp
 from utils.set_env import set_rank, init_process_group
-
+from builds.model import build_model
 
 def train_module(model_cfg, train_cfg, env_cfg):
     """Main Module Train Function
