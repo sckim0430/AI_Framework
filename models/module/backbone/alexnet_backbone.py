@@ -13,7 +13,7 @@ class AlexNet_Backbone(nn.Module):
         pretrained (bool) : option for using pretrained model weight
     """
 
-    def __init__(self, in_channel=3, lrn_param=[5, 1e-4, 0.75, 1.0], pretrained=False):
+    def __init__(self, in_channel=3, lrn_param=[5, 1e-4, 0.75, 1.0], pretrained=False, init_weight=True):
         super(AlexNet_Backbone, self).__init__()
 
         #Setting Param
@@ -30,6 +30,11 @@ class AlexNet_Backbone(nn.Module):
         self.relu = nn.ReLU(inplace=True)
         self.lrn = nn.LocalResponseNorm(*lrn_param)
         self.max_pooling = nn.MaxPool2d(3, 2)
+
+        self.init_weight = init_weight
+
+        if self.init_weight:
+            self.init_weights()
 
     def forward(self, x):
         x = self.conv1(x)
@@ -52,3 +57,14 @@ class AlexNet_Backbone(nn.Module):
         x = self.relu(x)
 
         return x
+
+    def init_weights(self):
+        for m in self.modules():
+            if isinstance(m, nn.Conv2d):
+                nn.init.normal_(m.weight, 0, 0.01)
+
+        nn.init.constant_(self.conv1.bias, 0)
+        nn.init.constant_(self.conv2.bias, 1)
+        nn.init.constant_(self.conv3.bias, 0)
+        nn.init.constant_(self.conv4.bias, 1)
+        nn.init.constant_(self.conv5.bias, 1)

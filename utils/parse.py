@@ -12,6 +12,8 @@ def parse_type(cfg):
     """
     parsed_cfg = cfg.copy()
 
+    assert 'type' in parsed_cfg, "keyword 'type' not in cfg"
+
     type = parsed_cfg['type']
     del parsed_cfg['type']
     params = parsed_cfg

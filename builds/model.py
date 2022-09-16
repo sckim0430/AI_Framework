@@ -9,29 +9,29 @@ def build_model(model_cfg):
     """Build Model Class from Model Configuration
 
     Args:
-        model_cfg (dict): Model Options
+        model_cfg (dict): model options
     """
     #parse model config
-    model_type, model_params = parse_type(model_cfg)
+    type, params = parse_type(model_cfg)
 
     #build models
-    if 'backbone' in model_params:
-        model_params['backbone'] = build_sub_model(model_params['backbone'])
+    if 'backbone' in params:
+        params['backbone'] = build_sub_model(params['backbone'])
 
-    if 'cls_head' in model_params:
-        model_params['cls_head'] = build_sub_model(model_params['cls_head'])
+    if 'cls_head' in params:
+        params['cls_head'] = build_sub_model(params['cls_head'])
 
-    return eval(model_type)(**model_params)
+    return eval(type)(**params)
 
 
 def build_sub_model(cfg):
     """Build Sub Model Class
 
     Args:
-        cfg (dict): Sub Model Config
+        cfg (dict): sub model config
 
     Returns:
-        class: Sub Model Class Object
+        class: sub model class object
     """
     #parse type from config
     type, params = parse_type(cfg)
