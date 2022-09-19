@@ -16,6 +16,7 @@ def build_model(model_cfg):
 
     #build models
     if 'backbone' in params:
+        # assert params['backbone']
         params['backbone'] = build_sub_model(params['backbone'])
 
     if 'cls_head' in params:

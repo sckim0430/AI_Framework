@@ -1,6 +1,6 @@
 """Implement cross entropy loss.
 """
-from base import BaseWeightedLoss
+from models.module.loss.base_loss import BaseWeightedLoss
 import torch
 import torch.nn.functional as F
 
@@ -24,7 +24,7 @@ class CrossEntropyLoss(BaseWeightedLoss):
         if self.class_weight is not None:
             self.class_weight = torch.Tensor(self.class_weight)
 
-    def _forward(self,cls_score,label,**kwargs):
+    def _forward(self,cls_scores,labels,**kwargs):
         """Calculate the loss.
 
         Args:
@@ -35,12 +35,12 @@ class CrossEntropyLoss(BaseWeightedLoss):
             torch.Tensor: The calculated cross entropy loss.
         """
 
-        if cls_score.size() == label.size():
+        if cls_scores.size() == labels.size():
             #Calculate with soft label
-            assert cls_score.dim() == 2, "Only support 2 dimension soft label"
+            assert cls_scores.dim() == 2, "Only support 2 dimension soft label"
             assert len(kwargs)==0, "For now, no extra arguments are supproted for soft label"
 
-            F.log_softmax(cls_score,1)
+            F.log_softmax(cls_scores,1)
         else:
             #Calculate with hard label
             pass

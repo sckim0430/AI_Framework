@@ -5,7 +5,7 @@ from abc import ABCMeta, abstractmethod
 import torch.nn as nn
 
 
-class BaseWeightedLoss(nn.Module, meta_class=ABCMeta):
+class BaseWeightedLoss(nn.Module, metaclass=ABCMeta):
     """The super class with weighted loss.
 
     Args:

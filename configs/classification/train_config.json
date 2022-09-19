@@ -5,5 +5,12 @@
     "dummy": false,
     "epochs": 100,
     "start_epoch": 0,
-    "resume": false
+    "resume": false,
+    "evaluation": {
+        "top_k_accuracy_score": {
+            "k": 2
+        },
+        "precision_score":null,
+        "recall_score":null
+    }
 }

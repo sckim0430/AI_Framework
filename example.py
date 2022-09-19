@@ -205,12 +205,7 @@ def main_worker(gpu, ngpus_per_node, args):
             scheduler.load_state_dict(checkpoint['scheduler'])
             print("=> loaded checkpoint '{}' (epoch {})"
                   .format(args.resume, checkpoint['epoch']))
-        else:
-            print("=> no checkpoint found at '{}'".format(args.resume))
-
-    cudnn.benchmark = True
-
-    # Data loading code
+        else:datasets
     if args.dummy:
         print("=> Dummy data is used!")
         train_dataset = datasets.FakeData(
