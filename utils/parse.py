@@ -1,18 +1,18 @@
-"""Parsing Utils
+"""Parse the utils.
 """
 
 def parse_type(cfg):
-    """Parse Type Keyword from Config
+    """Parse the type keyword from config file.
 
     Args:
-        cfg (dict): model configuration
+        cfg (dict): The configuration.
 
     Returns:
-        str, dict: model class name, model class parameters
+        str, dict: The type and parameters.
     """
-    parsed_cfg = cfg.copy()
+    assert "type" in cfg, "The config file should have 'type' key."
 
-    assert 'type' in parsed_cfg, "keyword 'type' not in cfg"
+    parsed_cfg = cfg.copy()
 
     type = parsed_cfg['type']
     del parsed_cfg['type']

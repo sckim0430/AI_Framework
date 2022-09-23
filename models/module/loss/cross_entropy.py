@@ -34,11 +34,11 @@ class CrossEntropyLoss(BaseWeightedLoss):
         Returns:
             torch.Tensor: The calculated cross entropy loss.
         """
-
         if cls_scores.size() == labels.size():
             #Calculate with soft label
             assert cls_scores.dim() == 2, "Only support 2 dimension soft label"
-            assert len(kwargs)==0, "For now, no extra arguments are supproted for soft label"
+            
+
 
             F.log_softmax(cls_scores,1)
         else:

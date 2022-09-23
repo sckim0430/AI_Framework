@@ -1,16 +1,11 @@
 {
     "train_dir": "/home/sckim/Dataset/ILSVRC2012_img_train/ILSVRC2012_img_train",
     "val_dir": "/home/sckim/Dataset/ILSVRC2012_img_val/",
+    "test_dir": "/home/sckim/Dataset/ILSVRC2012_img_test/",
     "weight_dir": "/home/sckim/Weight/",
+    "weight_load": "/home/sckim/Weight/load.pth",
     "dummy": false,
     "epochs": 100,
     "start_epoch": 0,
-    "resume": false,
-    "evaluation": {
-        "top_k_accuracy_score": {
-            "k": 2
-        },
-        "precision_score":null,
-        "recall_score":null
-    }
+    "resume": ""
 }

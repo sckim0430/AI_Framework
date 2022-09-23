@@ -2,9 +2,9 @@
 """
 import torch.multiprocessing as mp
 from utils.set_env import set_rank, init_process_group
-from builds.model import build_model
+from builds.build import build_model
 
-def train_module(model_cfg, train_cfg, env_cfg):
+def train_module(model_cfg, data_cfg, env_cfg):
     """Main Module Train Function
 
     Args:
@@ -15,12 +15,12 @@ def train_module(model_cfg, train_cfg, env_cfg):
 
     if env_cfg['multiprocessing_distributed']:
         mp.sqawn(train_sub_module, nprocs=env_cfg['ngpus_per_node'], args=(
-            model_cfg, train_cfg, env_cfg))
+            model_cfg, data_cfg, env_cfg))
     else:
-        train_sub_module(env_cfg['gpu_id'], model_cfg, train_cfg, env_cfg)
+        train_sub_module(env_cfg['gpu_id'], model_cfg, data_cfg, env_cfg)
 
 
-def train_sub_module(gpu_id, model_cfg, train_cfg, env_cfg):
+def train_sub_module(gpu_id, model_cfg, data_cfg, env_cfg):
     """Sub Module Train Function
 
     Args:

@@ -21,10 +21,40 @@
             "pooling_type": "avg",
             "loss_cls": {
                 "type": "CrossEntropyLoss",
-                "loss_weight":1.0,
-                "class_weight":null
+                "loss_weight": 1.0,
+                "class_weight": null
             },
+            "label_smoothing_eps":0.0,
+            "multi_label":false,
             "init_weight": true
+        }
+    },
+    "params": {
+        "evaluation":{
+            "train":{
+                "top_k_accuracy_score": {
+                    "k": 2
+                },
+                "precision_score": null,
+                "recall_score": null
+            },
+            "validation":{
+                "top_k_accuracy_score": {
+                    "k": 2
+                },
+                "precision_score": null,
+                "recall_score": null
+            },
+            "test":{
+                "top_k_accuracy_score": {
+                    "k": 2
+                },
+                "precision_score": null,
+                "recall_score": null
+            }
+        },
+        "loss": {
+            "loss_cls": null
         }
     },
     "optimizer": {
