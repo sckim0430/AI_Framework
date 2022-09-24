@@ -20,8 +20,9 @@ def check_cfg(model_cfg, data_cfg, env_cfg, mode=True):
     exist_check(["model", "params", "optimizer"], model_cfg)
     exist_check(["type"], model_cfg['model'])
     exist_check(["type"], model_cfg['optimizer'])
-    exist_check(["evaluation","loss"], model_cfg['params'])
-    exist_check(["train","validation","test"], model_cfg['params']['evaluation'])
+    exist_check(["evaluation", "loss"], model_cfg['params'])
+    exist_check(["train", "validation", "test"],
+                model_cfg['params']['evaluation'])
 
     for k in model_cfg['model'].keys():
         if k == "type":
@@ -60,6 +61,7 @@ def check_cfg(model_cfg, data_cfg, env_cfg, mode=True):
 
     print('done.')
 
+
 def exist_check(*keys, cfg):
     """Exist Check.
 
@@ -69,4 +71,33 @@ def exist_check(*keys, cfg):
     """
     for k in keys:
         if k not in cfg:
-            raise ValueError('The {} must be in config.')
+            raise ValueError('The {} must be in config.'.format(k))
+
+
+def check_cls(cls_scores, labels, num_class, multi_label=False):
+    """Check the classification scores and labels format.
+
+    Args:
+        cls_scores (torch.Tensor): The classification scores.
+        labels (torch.Tensor): The labels.
+        num_class (_type_): Number of the class.
+        multi_label (bool, optional): The multi label option. Defaults to False.
+    """
+
+    cls_dim = cls_scores.dim()
+    labels_dim = labels.dim()
+    
+    if num_class == 2:
+        if cls_dim!=1 or labels_dim!=1:
+            raise ValueError(
+                "The binary classification task must have 1-dimension classification scores and labels.")
+    else:
+        if cls_dim != 2:
+            raise ValueError("The multi class and label classification task must have 2-dimension classification scores.")
+        
+        if multi_label:
+            if labels_dim != 2:
+                raise ValueError("The multi label classification task must have 2-dimension labels.")
+        else:
+            if labels_dim not in (1,2):
+                raise ValueError("The multi class classification task must have 1 or 2-dimension labels.")

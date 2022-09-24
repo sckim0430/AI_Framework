@@ -38,6 +38,7 @@ class CrossEntropyLoss(BaseWeightedLoss):
             #Calculate with soft label
             assert cls_scores.dim() == 2, "Only support 2 dimension soft label"
             
+            
 
 
             F.log_softmax(cls_scores,1)

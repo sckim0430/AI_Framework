@@ -33,21 +33,21 @@
         "evaluation":{
             "train":{
                 "top_k_accuracy_score": {
-                    "k": 2
+                    "k": 5
                 },
                 "precision_score": null,
                 "recall_score": null
             },
             "validation":{
                 "top_k_accuracy_score": {
-                    "k": 2
+                    "k": 5
                 },
                 "precision_score": null,
                 "recall_score": null
             },
             "test":{
                 "top_k_accuracy_score": {
-                    "k": 2
+                    "k": 5
                 },
                 "precision_score": null,
                 "recall_score": null
