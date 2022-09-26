@@ -80,7 +80,7 @@ def check_cls(cls_scores, labels, num_class, multi_label=False):
     Args:
         cls_scores (torch.Tensor): The classification scores.
         labels (torch.Tensor): The labels.
-        num_class (_type_): Number of the class.
+        num_class (int): Number of the class.
         multi_label (bool, optional): The multi label option. Defaults to False.
     """
 

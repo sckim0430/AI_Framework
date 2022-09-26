@@ -12,14 +12,13 @@ from utils.check import check_cls
 
 
 class Base_Head(nn.Module, metaclass=ABCMeta):
-    def __init__(self, in_channels, num_class, loss_cls=dict(type='CrossEntropyLoss', loss_weight=1.0), label_smoothing_eps=0.0, multi_label=False):
+    def __init__(self, in_channels, num_class, loss_cls=dict(type='CrossEntropyLoss', loss_weight=1.0), multi_label=False):
         self.in_channels = in_channels
 
         assert num_class >= 2, "Number of the class must more than 2."
         self.num_class = num_class
 
         self.loss_cls = build(loss_cls)
-        self.label_smoothing_eps = label_smoothing_eps
         self.multi_label = multi_label
 
     def loss(self, cls_scores, labels, **kwargs):
@@ -30,33 +29,21 @@ class Base_Head(nn.Module, metaclass=ABCMeta):
             labels (torch.Tensor): The ground truth.
 
         Binary class classification with BCE loss, N 2 + false
-        cls_scores : B[prob]
-        labels : B[prob|int]
+        cls_scores : B[float]
+        labels : B[float|int]
 
         Multi class classification with CE loss, N 2초과 + false
-        cls_scores : BxN[prob]
-        labels : BxN[prob|int] | B[int]
+        cls_scores : BxN[float]
+        labels : BxN[float|int] | B[int]
 
         Multi label classification with BCE loss, N 2이상 + true
-        cls_scores : BxN[prob]
-        labels : BxN[prob|int]
+        cls_scores : BxN[float]
+        labels : BxN[float|int]
 
         N : num of class(>=2), B : batch size, R : random
         """
 
         check_cls(cls_scores, labels, self.num_calss, self.multi_label)
-
-        if self.label_smoothing_eps > 0:
-            if cls_scores.size() != labels.size():
-                labels = F.one_hot(labels, self.num_class)
-
-            if self.multi_label:
-                label_num = 2
-            else:
-                label_num = self.num_calss
-
-            labels = ((1-self.label_smoothing_eps)*labels +
-                      self.label_smoothing_eps/label_num)
 
         losses = dict()
 

@@ -21,10 +21,8 @@
             "pooling_type": "avg",
             "loss_cls": {
                 "type": "CrossEntropyLoss",
-                "loss_weight": 1.0,
-                "class_weight": null
+                "loss_weight": 1.0
             },
-            "label_smoothing_eps":0.0,
             "multi_label":false,
             "init_weight": true
         }
@@ -54,7 +52,10 @@
             }
         },
         "loss": {
-            "loss_cls": null
+            "loss_cls": {
+                "label_smoothing" : 0.0,
+                "weight" : null
+            }
         }
     },
     "optimizer": {

@@ -10,7 +10,7 @@ class AlexNet_Head(Base_Head):
     Args:
         Base_Head (base_head.Base_Head): The super class of the AlexNet head.
     """
-    def __init__(self, num_class=1000, in_channels=256, dropout_ratio=0.5, pooling_type="avg", loss_cls=dict(type="CrossEntropy"), label_smoothing_eps = 0.0, multi_label=False, init_weight=True):
+    def __init__(self, num_class=1000, in_channels=256, dropout_ratio=0.5, pooling_type="avg", loss_cls=dict(type="CrossEntropy",loss_weight=1.0), multi_label=False, init_weight=True):
         """The initalization.
 
         Args:
@@ -21,7 +21,7 @@ class AlexNet_Head(Base_Head):
             loss (dict, optional): The loss option. Defaults to dict(type="CrossEntropy").
             init_weight (bool, optional): The option for initalization of the weights. Defaults to True.
         """
-        super().__init__(num_class,in_channels,loss_cls,label_smoothing_eps,multi_label)
+        super().__init__(num_class,in_channels,loss_cls,multi_label)
         self.num_class = num_class
         self.in_channels = in_channels
         self.dropout_ratio = dropout_ratio

@@ -10,19 +10,14 @@ class CrossEntropyLoss(BaseWeightedLoss):
     Args:
         BaseWeightedLoss (base.BaseWeigtedLoss): The super class with weighted loss.
     """
-    def __init__(self,loss_weight=1.0,class_weight=None):
+    def __init__(self,loss_weight=1.0):
         """The initialization.
 
         Args:
             loss_weight (float, optional): The weight of loss. Defaults to 1.0.
-            class_weight (_type_, optional): The weight of class. Defaults to None.
+            class_weight (list[float], optional): The weight of class. Defaults to None.
         """
         super().__init__(loss_weight=loss_weight)
-
-        self.class_weight = class_weight
-
-        if self.class_weight is not None:
-            self.class_weight = torch.Tensor(self.class_weight)
 
     def _forward(self,cls_scores,labels,**kwargs):
         """Calculate the loss.
@@ -34,16 +29,10 @@ class CrossEntropyLoss(BaseWeightedLoss):
         Returns:
             torch.Tensor: The calculated cross entropy loss.
         """
-        if cls_scores.size() == labels.size():
-            #Calculate with soft label
-            assert cls_scores.dim() == 2, "Only support 2 dimension soft label"
+
+        if "weight" in kwargs and kwargs['weight']:
+            kwargs['weight'] = torch.tensor(kwargs['weight'],device=cls_scores.device)
             
-            
+        loss_cls = F.cross_entropy(cls_scores,labels,**kwargs)
 
-
-            F.log_softmax(cls_scores,1)
-        else:
-            #Calculate with hard label
-            pass
-
-        pass
+        return loss_cls
