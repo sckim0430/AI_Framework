@@ -1,29 +1,28 @@
-"""AlexNet Head Class
+"""The alexnet head Implementation.
 """
 import torch.nn as nn
 from base_head import Base_Head
 
 
 class AlexNet_Head(Base_Head):
-    """AlexNet Head Architecture
+    """The alexnet head.
 
     Args:
         Base_Head (base_head.Base_Head): The super class of the AlexNet head.
     """
-    def __init__(self, num_class=1000, in_channels=256, dropout_ratio=0.5, pooling_type="avg", loss_cls=dict(type="CrossEntropy",loss_weight=1.0), multi_label=False, init_weight=True):
+    def __init__(self, num_class=1000, in_channels=256, loss_cls=dict(type="CrossEntropy",loss_weight=1.0), multi_label=False, init_weight=True, dropout_ratio=0.5, pooling_type="avg"):
         """The initalization.
 
         Args:
-            num_class (int, optional): The number of class to classification. Defaults to 1000.
-            in_channel (int, optional): The number of channel in input feature. Defaults to 256.
+            num_class (int, optional): The number of class. Defaults to 1000.
+            in_channel (int, optional): The input channels. Defaults to 256.
+            loss_cls (dict, optional): The classification loss parameter. Defaults to dict(type='CrossEntropyLoss', loss_weight=1.0).
+            multi_label (bool, optional): The multi label option. Defaults to False.
+            init_weight (bool, optional): The initalization of the weights option. Defaults to True.
             dropout_ratio (float, optional): The dropout ratio. Defaults to 0.5.
-            pooling_type (str, optional): The option for global average pooling. Defaults to "avg".
-            loss (dict, optional): The loss option. Defaults to dict(type="CrossEntropy").
-            init_weight (bool, optional): The option for initalization of the weights. Defaults to True.
+            pooling_type (str, optional): The global average pooling option. Defaults to "avg".
         """
         super().__init__(num_class,in_channels,loss_cls,multi_label)
-        self.num_class = num_class
-        self.in_channels = in_channels
         self.dropout_ratio = dropout_ratio
         self.pooling_type = pooling_type
 
@@ -47,6 +46,14 @@ class AlexNet_Head(Base_Head):
             self.init_wiehgts()
 
     def forward(self, x):
+        """The operation for every call.
+
+        Args:
+            x (torch.Tensor): The input features.
+
+        Returns:
+            torch.Tensor: The output features.
+        """
         x = self.pooling(x)
         x = self.flatten(x)
 
@@ -63,6 +70,8 @@ class AlexNet_Head(Base_Head):
         return x
 
     def init_weights(self):
+        """The operation for initalization weights.
+        """
         for m in self.modules():
             if isinstance(m,nn.Linear):
                 nn.init.normal_(m.weight,0,0.01)

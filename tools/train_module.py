@@ -1,16 +1,17 @@
-"""Train Module
+"""The train module implementation.
 """
 import torch.multiprocessing as mp
 from utils.set_env import set_rank, init_process_group
 from builds.build import build_model
 
+
 def train_module(model_cfg, data_cfg, env_cfg):
-    """Main Module Train Function
+    """The operation for train module.
 
     Args:
-        model_cfg (dict): model options
-        train_cfg (dict): train options
-        env_cfg (dict): environment options
+        model_cfg (dict): The model config.
+        data_cfg (dict): The data config.
+        env_cfg (dict): The environment config.
     """
 
     if env_cfg['multiprocessing_distributed']:
@@ -21,13 +22,13 @@ def train_module(model_cfg, data_cfg, env_cfg):
 
 
 def train_sub_module(gpu_id, model_cfg, data_cfg, env_cfg):
-    """Sub Module Train Function
+    """The operation for sub train module.
 
     Args:
-        gpu_id (int, Optional): the gpu id
-        model_cfg (dict): model options
-        train_cfg (dict): train options
-        env_cfg (dict): environment options
+        gpu_id (int): The gpu id.
+        model_cfg (dict): The model config.
+        data_cfg (dict): The data config.
+        env_cfg (dict): The environment config.
     """
     #gpu : 현재 프로세스에서 사용하는 gpu id
     #None인 경우에는 gpu를 사용할 수 있다면 전체 gpu 목록에 모델 weight를 할당한다. (model.cuda())

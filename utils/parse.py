@@ -1,11 +1,12 @@
-"""Parse the utils.
+"""The parse utils implementation.
 """
 
+
 def parse_type(cfg):
-    """Parse the type keyword from config file.
+    """The operation for parse the type keyword from config.
 
     Args:
-        cfg (dict): The configuration.
+        cfg (dict): The input config.
 
     Returns:
         str, dict: The type and parameters.

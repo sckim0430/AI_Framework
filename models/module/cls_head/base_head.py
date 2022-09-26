@@ -1,18 +1,32 @@
-"""Implement the base head class.
+"""The base head Implementation.
 """
 from abc import ABCMeta, abstractmethod
 from sklearn.metrics import *
 import torch
 import torch.nn as nn
-import torch.nn.functional as F
 
 from builds.build import build
-from utils.convert import cvt2cat, cvt2sps
+from utils.convert import cvt2sps
 from utils.check import check_cls
 
 
 class Base_Head(nn.Module, metaclass=ABCMeta):
+    """The base classification head.
+
+    Args:
+        nn.Module: The super class of base classification head.
+        metaclass (ABCMeta, optional): The abstract class. Defaults to ABCMeta.
+    """
+
     def __init__(self, in_channels, num_class, loss_cls=dict(type='CrossEntropyLoss', loss_weight=1.0), multi_label=False):
+        """The initalization.
+
+        Args:
+            in_channels (int): The input channels.
+            num_class (int): The number of class.
+            loss_cls (dict, optional): The classification loss parameter. Defaults to dict(type='CrossEntropyLoss', loss_weight=1.0).
+            multi_label (bool, optional): The multi label option. Defaults to False.
+        """
         self.in_channels = in_channels
 
         assert num_class >= 2, "Number of the class must more than 2."
@@ -22,7 +36,7 @@ class Base_Head(nn.Module, metaclass=ABCMeta):
         self.multi_label = multi_label
 
     def loss(self, cls_scores, labels, **kwargs):
-        """Calculate the loss.
+        """The loss operation.
 
         Args:
             cls_score (torch.Tensor): The output of the model.
@@ -42,7 +56,6 @@ class Base_Head(nn.Module, metaclass=ABCMeta):
 
         N : num of class(>=2), B : batch size, R : random
         """
-
         check_cls(cls_scores, labels, self.num_calss, self.multi_label)
 
         losses = dict()
@@ -75,13 +88,13 @@ class Base_Head(nn.Module, metaclass=ABCMeta):
 
     @abstractmethod
     def init_weights(self):
-        """Initialize the weights.
+        """The weight initalization.
         """
         pass
 
     @abstractmethod
     def forward(self, x):
-        """Define operation for every call.
+        """The operation for every call.
 
         Args:
             x (torch.Tensor): The Features.

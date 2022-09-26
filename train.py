@@ -1,4 +1,4 @@
-"""Train Script For Classification Model
+"""The train implementation.
 """
 import argparse
 import json
@@ -8,11 +8,13 @@ from tools.train_module import train_module
 
 
 def parse_args():
-    """Generate Arguments
+    """The operation for parse arguments.
+
     Returns:
-        argparse.Namespace : arguments
+        argparse.Namespace : The arguments.
+    
     Notice:
-        We Only Use Json Format Config File
+        We only use json format config file.
     """
 
     parser = argparse.ArgumentParser(description='Pytorch Imagenet Train')
@@ -28,7 +30,7 @@ def parse_args():
 
 
 def main():
-    """Main Worker Controller
+    """The operation for main.
     """
 
     #load config

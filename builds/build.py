@@ -1,4 +1,4 @@
-"""Build the model from config option.
+"""The build implementation.
 """
 from models.type import *
 from models.module import *
@@ -6,13 +6,13 @@ from utils.parse import parse_type
 
 
 def build(cfg):
-    """Build the class.
+    """The operation for build.
 
     Args:
-        cfg (dict): Sub config.
+        cfg (dict): The input config.
 
     Returns:
-        class: Sub class object.
+        class: The class object.
     """
     #parse type from config
     type, params = parse_type(cfg)
@@ -21,13 +21,13 @@ def build(cfg):
 
 
 def build_model(cfg):
-    """Build the model class from config option.
+    """The operation for build model.
 
     Args:
-        cfg (dict): Model options.
+        cfg (dict): The input config.
 
     Returns:
-        class: Model class object.
+        class: The class object.
     """
     #parse model config
     type, params = parse_type(cfg)
@@ -40,14 +40,14 @@ def build_model(cfg):
 
 
 def build_param(cfg, type='train'):
-    """Build the param from config with type.
+    """The operation for build parameter.
 
     Args:
-        cfg (_type_): Parameter options.
-        type (str, optional): Parameter type. Defaults to 'train'.
+        cfg (dict): The input config.
+        type (str, optional): The parameter about type. Defaults to 'train'.
 
     Returns:
-        dict: Built parameter options.
+        dict: The output config.
     """
     assert 'evaluation' in cfg, "The config file must have 'evaluation' key."
     assert type in cfg['evaluation'] and type in (

@@ -1,19 +1,19 @@
-"""Check the file
+"""The check file implementation.
 """
 import os
 
 
 def check_cfg(model_cfg, data_cfg, env_cfg, mode=True):
-    """Check the config file.
+    """The operation for check the config.
 
     Args:
-        model_cfg (dict): The model config file.
-        data_cfg (dict): The data config file.
-        env_cfg (dict): The environment config file.
-        mode (bool): The option for train(true) / test(false) mode
+        model_cfg (dict): The model config.
+        data_cfg (dict): The data config.
+        env_cfg (dict): The environment config.
+        mode (bool, optional): The check mode option. if mode = true then train else test.
 
     Raises:
-        ValueError: The config file value error.
+        ValueError: The value error.
     """
     #model_cfg check
     print('Check the model config file.')
@@ -63,11 +63,14 @@ def check_cfg(model_cfg, data_cfg, env_cfg, mode=True):
 
 
 def exist_check(*keys, cfg):
-    """Exist Check.
+    """The operation for check the exist.
 
     Args:
         *keys (list[str]): The keys.
         cfg (dict): The config.
+
+    Raises:
+        ValueError: The value error.
     """
     for k in keys:
         if k not in cfg:
@@ -75,29 +78,34 @@ def exist_check(*keys, cfg):
 
 
 def check_cls(cls_scores, labels, num_class, multi_label=False):
-    """Check the classification scores and labels format.
+    """The operation for check the classification scores and labels format.
 
     Args:
         cls_scores (torch.Tensor): The classification scores.
         labels (torch.Tensor): The labels.
-        num_class (int): Number of the class.
+        num_class (int): The number of class.
         multi_label (bool, optional): The multi label option. Defaults to False.
-    """
 
+    Raises:
+        ValueError: The value error.
+    """
     cls_dim = cls_scores.dim()
     labels_dim = labels.dim()
-    
+
     if num_class == 2:
-        if cls_dim!=1 or labels_dim!=1:
+        if cls_dim != 1 or labels_dim != 1:
             raise ValueError(
                 "The binary classification task must have 1-dimension classification scores and labels.")
     else:
         if cls_dim != 2:
-            raise ValueError("The multi class and label classification task must have 2-dimension classification scores.")
-        
+            raise ValueError(
+                "The multi class and label classification task must have 2-dimension classification scores.")
+
         if multi_label:
             if labels_dim != 2:
-                raise ValueError("The multi label classification task must have 2-dimension labels.")
+                raise ValueError(
+                    "The multi label classification task must have 2-dimension labels.")
         else:
-            if labels_dim not in (1,2):
-                raise ValueError("The multi class classification task must have 1 or 2-dimension labels.")
+            if labels_dim not in (1, 2):
+                raise ValueError(
+                    "The multi class classification task must have 1 or 2-dimension labels.")

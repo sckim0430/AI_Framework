@@ -1,4 +1,4 @@
-"""Implement super class with weighted loss.
+"""The weighted loss Implementation.
 """
 
 from abc import ABCMeta, abstractmethod
@@ -6,41 +6,41 @@ import torch.nn as nn
 
 
 class BaseWeightedLoss(nn.Module, metaclass=ABCMeta):
-    """The super class with weighted loss.
+    """The weighted loss.
 
     Args:
-        torch.nn.Module : The torch class for loss definition.
-        meta_class (abc.ABCMeta, optional): The abstract base class. Defaults to ABCMeta.
+        nn.Module: The super class of weighted loss.
+        metaclass (ABCMeta, optional): The abstract class. Defaults to ABCMeta.
     """
 
     def __init__(self, loss_weight=1.0):
-        """The Initialization.
+        """The initalization.
 
         Args:
-            loss_weight (float, optional): The weight of loss. Defaults to 1.0.
+            loss_weight (float, optional): The loss weight. Defaults to 1.0.
         """
         super().__init__()
         self.loss_weight = loss_weight
 
     @abstractmethod
     def _forward(self, *args, **kwargs):
-        """The abstract method to calculate the loss.
+        """The operation for every call.
         """
         pass
 
     def forward(self, *args, **kwargs):
-        """Calculate the loss.
+        """The operation for every call.
 
         Returns:
-            torch.Tensor: The calculated loss.
+            torch.Tensor: The loss.
         """
-        ret = self._forward(*args,**kwargs)
+        ret = self._forward(*args, **kwargs)
 
         if isinstance(ret, dict):
             for k in ret:
                 if 'loss' in k:
                     ret[k] *= self.loss_weight
         else:
-                ret *= self.loss_weight
-        
+            ret *= self.loss_weight
+
         return ret

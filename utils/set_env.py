@@ -1,4 +1,4 @@
-"""Setting Environment
+"""The setting environment implementation.
 """
 import os
 import random
@@ -11,10 +11,10 @@ import warnings
 
 
 def set_deterministic_option(seed):
-    """set random option from seed
+    """The operation for set random option from seed.
 
     Args:
-        seed (int): the seed.
+        seed (int): The seed.
     """
     assert seed is not None
 
@@ -50,9 +50,10 @@ def set_deterministic_option(seed):
 
 
 def set_world_size(env_cfg):
-    """Set World Size
+    """The operation for set the world size.
+
     Args:
-        env_cfg (dict): environment options
+        env_cfg (dict): The environment config.
     """
 
     if env_cfg['dist_url'] == 'env://' and env_cfg['world_size'] == -1:
@@ -75,10 +76,10 @@ def set_world_size(env_cfg):
 
 
 def set_rank(env_cfg):
-    """Set Rank
+    """The operation for set rank.
 
     Args:
-        env_cfg (dict): environment options
+        env_cfg (dict): The environment config.
     """
     assert env_cfg['distributed']
 
@@ -95,10 +96,10 @@ def set_rank(env_cfg):
 
 
 def init_process_group(env_cfg):
-    """Initalize Process Group
+    """The operation for initalize process group.
 
     Args:
-        env_cfg (dict): environment options
+        env_cfg (dict): The environment config.
     """
     assert env_cfg['distributed']
 

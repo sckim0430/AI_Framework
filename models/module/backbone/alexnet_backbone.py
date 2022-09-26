@@ -1,19 +1,24 @@
-"""AlexNet Backbone Class
+"""The alexnet backbone implementation.
 """
 import torch.nn as nn
 
 
 class AlexNet_Backbone(nn.Module):
-    """AlexNet Backbone Architecture
+    """The alexnet backbone.
 
     Args:
-        in_channel (int) : number of channel in input feature
-        out_channel (int) : number of channel in out feature
-        lrn_param (list) : local response norm parameters
-        pretrained (bool) : option for using pretrained model weight
+        nn.Module: The super class of base alexnet backbone.
     """
 
     def __init__(self, in_channel=3, lrn_param=[5, 1e-4, 0.75, 1.0], pretrained=False, init_weight=True):
+        """The initalization.
+
+        Args:
+            in_channel (int, optional): The input channels. Defaults to 3.
+            lrn_param (list[float], optional): The LRN parameter. Defaults to [5, 1e-4, 0.75, 1.0].
+            pretrained (bool, optional): _description_. Defaults to False.
+            init_weight (bool, optional): The initalization of the weights option. Defaults to True.
+        """
         super(AlexNet_Backbone, self).__init__()
 
         #Setting Param
@@ -37,6 +42,14 @@ class AlexNet_Backbone(nn.Module):
             self.init_weights()
 
     def forward(self, x):
+        """The operation for every call.
+
+        Args:
+            x (torch.Tensor): The input features.
+
+        Returns:
+            torch.Tensor: The output features.
+        """
         x = self.conv1(x)
         x = self.relu(x)
         x = self.lrn(x)
@@ -59,6 +72,8 @@ class AlexNet_Backbone(nn.Module):
         return x
 
     def init_weights(self):
+        """The operation for initalization weights.
+        """
         for m in self.modules():
             if isinstance(m, nn.Conv2d):
                 nn.init.normal_(m.weight, 0, 0.01)

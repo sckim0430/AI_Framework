@@ -1,14 +1,14 @@
-"""Implementation of convert labels.
+"""The convert labels implementation.
 """
 import numpy as np
 
 
 def cvt2cat(array, num_class=None, dtype='float32'):
-    """Convert to categorical label.
+    """The operation for convert to categorical labels.
 
     Args:
         array (np.ndarray): The input labels.
-        num_class (int, optional): Number of the class. Defaults to None.
+        num_class (int, optional): The number of class. Defaults to None.
         dtype (str): The data type.
 
     Returns:
@@ -23,7 +23,7 @@ def cvt2cat(array, num_class=None, dtype='float32'):
 
 
 def cvt2sps(array):
-    """Convert to sparse label.
+    """The operation for convert to sparse labels.
 
     Args:
         array (np.ndarray): The input labels.
