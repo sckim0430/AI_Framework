@@ -16,7 +16,7 @@ def cvt2cat(array, num_class=None, dtype='float32'):
     """
     assert array.ndim == 1, "Array should have 1-dimension."
 
-    if not num_class:
+    if num_class is None:
         num_class = array.max()+1
 
     return np.eye(num_class, dtype=dtype)[array]

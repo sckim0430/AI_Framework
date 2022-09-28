@@ -10,7 +10,7 @@
                 0.75,
                 2.0
             ],
-            "pretrained": false,
+            "pretrained": null,
             "init_weight": true
         },
         "cls_head": {

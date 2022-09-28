@@ -30,22 +30,22 @@ def set_deterministic_option(seed):
                   'from checkpoints.')
 
 ##############################################################################################################################
-#DISTRIBUTED
-##############################################################################################################################
-#여섯 가지의 경우의 수
+#GPU CASE
+
 #1. cpu
-#2. single gpu, single process, single node
-#3. single gpu, multi process, multi node
-#4. multi gpu, single process, single node
-#5. multi gpu, multi process, single node
-#6. multi gpu, multi process, multi node
+#2. single gpu, single node, single process
+#3. single gpu, multi node, multi process
+#4. multi gpu, single node, single process
+#5. multi gpu, single node, multi process
+#6. multi gpu, multi node, multi process
 ##############################################################################################################################
-#dist_url : 프로세스 그룹을 초기화하는 방법을 명시한 url을 의미한다.
-#1. (2,4)와 같은 single process에서는 distributed training을 하지 않기 떄문에, world_size와 rank를 무시한다.
-#2. dist_url이 env://로 지정된 경우에는 환경 변수에 world_size, rank, master_port, master_ip가 지정된 것으로 간주한다.
-#3. dist_url에 world_size, rank 정보가 포함되어있지 않은 경우에는 world_size, rank를 초기화 시켜야한다.
-#4. dist_url에 world_size, rank 정보가 포함되어있는 경우에는 world_size, rank를 초기화 시키기 않아도 된다. => 이 코드에선 사용 x
-#5. dist_url을 사용하지 않는 경우에는 store 옵션을 사용해야되며, world_size, rank는 필수로 초기화 시켜야한다. => 이 코드에선 사용 x
+#dist_url
+
+#1. as in the case of 2 and 4, distributed training is not performed in a single process, so world_size and rank are ignored.
+#2. if dist_url is specified as env://, it is assumed that world_size, rank, master_port, and master_ip are specified in environment variables.
+#3. if world_size and rank information is not included in dist_url, world_size and rank must be initialized.
+#4. if dist_url includes world_size and rank information, it is not necessary to initialize world_size and rank on environment variable.this is not used now.
+#5. if dist_url is not used, the store option must be used, and world_size and rank must be initialized on environment variable. this is not used now.
 ##############################################################################################################################
 
 
@@ -57,22 +57,23 @@ def set_world_size(env_cfg):
     """
 
     if env_cfg['dist_url'] == 'env://' and env_cfg['world_size'] == -1:
-        env_cfg['world_size'] = int(os.environ['WORLD_SIZE'])
+        env_cfg.update({'world_size': int(os.environ['WORLD_SIZE'])})
 
-    #multiprocessing_distributed 옵션은 이 노드에서 멀티 프로세스 동작시킬지에 대한 옵션(5,6)
-    #world_size>1인 경우는 멀티 노드인 경우를 의미한다.(3)
-    #즉, distributed는 멀티 프로세스 옵션
-    env_cfg['distributed'] = env_cfg['world_size'] > 1 or env_cfg['multiprocessing_distributed']
+    #multiprocessing_distributed is option for multi processing in this node case with 5 and 6.
+    #when world_size>1, then multi node case with 3.
+    #distributed is option for total multi process.
+    env_cfg.update(
+        {'distributed': env_cfg['world_size'] > 1 or env_cfg['multiprocessing_distributed']})
 
-    #노드 당 gpu 수를 의미
-    #gpu 1개 당 1개의 프로세스를 할당
-    env_cfg['ngpus_per_node'] = torch.cuda.device_count()
+    #ngpus_per_node : gpu number per node
+    #we assign 1 process per gpu.
+    env_cfg.update({'ngpus_per_node': torch.cuda.device_count()})
 
-    #world_size는 노드 수에서 프로세스의 수를 의미하게 되어, (5,6)의 경우에는
-    #world_size = ngpus_per_node * world_size로 재정의한다. (rank도 재정의)
+    #the world size means node number to process number,
+    #so, in case with 5 and 6, we redefine world size = ngpus_per_node * world size.
     if env_cfg['multiprocessing_distributed']:
-        env_cfg['world_size'] = env_cfg['ngpus_per_node'] * \
-            env_cfg['world_size']
+        env_cfg.update(
+            {'world_size': env_cfg['ngpus_per_node'] * env_cfg['world_size']})
 
 
 def set_rank(env_cfg):
@@ -81,18 +82,16 @@ def set_rank(env_cfg):
     Args:
         env_cfg (dict): The environment config.
     """
-    assert env_cfg['distributed']
-
-    #dist_url이 env://인 경우에는 환경 변수의 값을 참조하여 구한다.
+    #when dist_url == env://, we refer to environment variable.
     if env_cfg['dist_url'] == 'env://' and env_cfg['rank'] == -1:
-        env_cfg['rank'] = int(os.environ['RANK'])
+        env_cfg.update({'rank': int(os.environ['RANK'])})
 
-    #gpu_cfg['rank']는 전체 노드중에서 현재 노드의 우선순위를 의미하므로,
-    #현재 노드의 우선순위 * 각 노드당 gpu 수 + 현재 gpu id(순위)로 갱신한다.
-    #현재 노드의 우선순위에서 프로세스의 순위로 변경된다.
+    #rank means the priority of the current node among all nodes,
+    #so, in case with 5 and 6, we redefine rank = rank * ngpus_per_node + gpu_id.
+    #finally, it is changed from the priority of the current node to the priority of the process.
     if env_cfg['multiprocessing_distributed']:
-        env_cfg['rank'] = env_cfg['rank'] * \
-            env_cfg['ngpus_per_node'] + env_cfg['gpu_id']
+        env_cfg.update(
+            {'rank': env_cfg['rank']*env_cfg['ngpus_per_node']+env_cfg['gpu_id']})
 
 
 def init_process_group(env_cfg):
@@ -101,7 +100,5 @@ def init_process_group(env_cfg):
     Args:
         env_cfg (dict): The environment config.
     """
-    assert env_cfg['distributed']
-
     dist.init_process_group(init_method=env_cfg['dist_url'], backend=env_cfg['dist_backend'],
                             world_size=env_cfg['world_size'], rank=env_cfg['rank'])

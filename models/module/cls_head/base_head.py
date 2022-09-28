@@ -68,7 +68,7 @@ class Base_Head(nn.Module, metaclass=ABCMeta):
         else:
             losses['loss_cls'] = loss_cls
 
-        if kwargs['evaluation']:
+        if kwargs['evaluation'] is not None:
             cls_scores_np = cls_scores.detach().cpu().numpy()
             labels_np = labels.detach().cpu().numpy()
 

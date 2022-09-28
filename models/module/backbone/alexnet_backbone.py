@@ -1,7 +1,10 @@
 """The alexnet backbone implementation.
 """
+import logging
+
 import torch.nn as nn
 
+from utils.checkpoint import load_checkpoint
 
 class AlexNet_Backbone(nn.Module):
     """The alexnet backbone.
@@ -10,13 +13,13 @@ class AlexNet_Backbone(nn.Module):
         nn.Module: The super class of base alexnet backbone.
     """
 
-    def __init__(self, in_channel=3, lrn_param=[5, 1e-4, 0.75, 1.0], pretrained=False, init_weight=True):
+    def __init__(self, in_channel=3, lrn_param=[5, 1e-4, 0.75, 1.0], pretrained=None, init_weight=True):
         """The initalization.
 
         Args:
             in_channel (int, optional): The input channels. Defaults to 3.
             lrn_param (list[float], optional): The LRN parameter. Defaults to [5, 1e-4, 0.75, 1.0].
-            pretrained (bool, optional): _description_. Defaults to False.
+            pretrained (str, optional): The pretrained weight path or None. Defaults to None.
             init_weight (bool, optional): The initalization of the weights option. Defaults to True.
         """
         super(AlexNet_Backbone, self).__init__()
@@ -73,13 +76,26 @@ class AlexNet_Backbone(nn.Module):
 
     def init_weights(self):
         """The operation for initalization weights.
+        
+        Raises:
+            TypeError : If pretrained type not in (None, str).
         """
-        for m in self.modules():
-            if isinstance(m, nn.Conv2d):
-                nn.init.normal_(m.weight, 0, 0.01)
+        if isinstance(self.pretrained,str):
+            logger = logging.getLogger()
+            logger.info('load model from : {}'.format(self.pretrained))
 
-        nn.init.constant_(self.conv1.bias, 0)
-        nn.init.constant_(self.conv2.bias, 1)
-        nn.init.constant_(self.conv3.bias, 0)
-        nn.init.constant_(self.conv4.bias, 1)
-        nn.init.constant_(self.conv5.bias, 1)
+            load_checkpoint(self,self.pretrained)
+
+        elif self.pretrained is None:
+            for m in self.modules():
+                if isinstance(m, nn.Conv2d):
+                    nn.init.normal_(m.weight, 0, 0.01)
+
+            nn.init.constant_(self.conv1.bias, 0)
+            nn.init.constant_(self.conv2.bias, 1)
+            nn.init.constant_(self.conv3.bias, 0)
+            nn.init.constant_(self.conv4.bias, 1)
+            nn.init.constant_(self.conv5.bias, 1)
+        else:
+            raise TypeError('The pretrained type must be in (None, str).')
+

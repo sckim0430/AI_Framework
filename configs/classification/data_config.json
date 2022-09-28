@@ -5,7 +5,8 @@
     "weight_dir": "/home/sckim/Weight/",
     "weight_load": "/home/sckim/Weight/load.pth",
     "dummy": false,
+    "batch_size" : 64,
     "epochs": 100,
-    "start_epoch": 0,
-    "resume": ""
+    "start_epoch": null,
+    "resume": null
 }

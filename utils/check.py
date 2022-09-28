@@ -1,8 +1,5 @@
 """The check file implementation.
 """
-import os
-
-
 def check_cfg(model_cfg, data_cfg, env_cfg, mode=True):
     """The operation for check the config.
 
@@ -13,7 +10,7 @@ def check_cfg(model_cfg, data_cfg, env_cfg, mode=True):
         mode (bool, optional): The check mode option. if mode = true then train else test.
 
     Raises:
-        ValueError: The value error.
+        ValueError: If the key doesn't exist.
     """
     #model_cfg check
     print('Check the model config file.')
@@ -36,15 +33,17 @@ def check_cfg(model_cfg, data_cfg, env_cfg, mode=True):
     print('Check the data config file.')
 
     if mode:
-        exist_check(["dummy", "epochs", "resume", "weight_dir"], data_cfg)
+        #train check mode
+        exist_check(["dummy", "batch_size", "epochs", "resume", "weight_dir"], data_cfg)
 
-        if data_cfg['resume'] and "start_epoch" not in data_cfg:
-            raise ValueError('The start_epoch option must be in data config.')
+        if data_cfg['resume'] is not None and "start_epoch" not in data_cfg:
+            raise ValueError('The start_epoch option must be in data config when resume is not None.')
 
         if not data_cfg['dummy'] and "train_dir" not in data_cfg:
-            raise ValueError('The train directory must be in the config file.')
+            raise ValueError('The train directory must be in the config file when dummy is false.')
 
     else:
+        #test check mode
         exist_check(["weight_load"], data_cfg)
 
         if not data_cfg['dummy'] and "test_dir" not in data_cfg:
@@ -56,11 +55,10 @@ def check_cfg(model_cfg, data_cfg, env_cfg, mode=True):
     #env_cfg check
     print('Check the environment config file.')
 
-    exist_check(["batch_size", "seed", "workers", "multiprocessing_distributed", "distributed",
+    exist_check(["seed", "workers", "multiprocessing_distributed", "distributed",
                 "gpu_id", "ngpus_per_node", "world_size", "rank", "dist_url", "dist_backend"], env_cfg)
 
     print('done.')
-
 
 def exist_check(*keys, cfg):
     """The operation for check the exist.
@@ -70,12 +68,11 @@ def exist_check(*keys, cfg):
         cfg (dict): The config.
 
     Raises:
-        ValueError: The value error.
+        ValueError: If the key doesn't exist.
     """
     for k in keys:
         if k not in cfg:
             raise ValueError('The {} must be in config.'.format(k))
-
 
 def check_cls(cls_scores, labels, num_class, multi_label=False):
     """The operation for check the classification scores and labels format.
@@ -87,7 +84,7 @@ def check_cls(cls_scores, labels, num_class, multi_label=False):
         multi_label (bool, optional): The multi label option. Defaults to False.
 
     Raises:
-        ValueError: The value error.
+        ValueError: If the dimension of labels and classification scores miss match.
     """
     cls_dim = cls_scores.dim()
     labels_dim = labels.dim()
