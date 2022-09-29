@@ -10,23 +10,24 @@ from builds.build import build_model
 from utils.set_env import set_rank, init_process_group
 
 
-def train_module(model_cfg, data_cfg, env_cfg):
+def train_module(model_cfg, data_cfg, env_cfg, log_manager):
     """The operation for train module.
 
     Args:
         model_cfg (dict): The model config.
         data_cfg (dict): The data config.
         env_cfg (dict): The environment config.
+        log_manager (builds.log.LogManager): The log manager.
     """
 
     if env_cfg['multiprocessing_distributed']:
         mp.sqawn(train_sub_module, nprocs=env_cfg['ngpus_per_node'], args=(
-            model_cfg, data_cfg, env_cfg))
+            model_cfg, data_cfg, env_cfg, log_manager))
     else:
-        train_sub_module(env_cfg['gpu_id'], model_cfg, data_cfg, env_cfg)
+        train_sub_module(env_cfg['gpu_id'], model_cfg, data_cfg, env_cfg, log_manager)
 
 
-def train_sub_module(gpu_id, model_cfg, data_cfg, env_cfg):
+def train_sub_module(gpu_id, model_cfg, data_cfg, env_cfg, log_manager):
     """The operation for sub train module.
 
     Args:
@@ -34,6 +35,7 @@ def train_sub_module(gpu_id, model_cfg, data_cfg, env_cfg):
         model_cfg (dict): The model config.
         data_cfg (dict): The data config.
         env_cfg (dict): The environment config.
+        log_manager (builds.log.LogManager): The log manager.
     """
     #gpu : 현재 프로세스에서 사용하는 gpu id
     #None인 경우에는 gpu를 사용할 수 있다면 전체 gpu 목록에 모델 weight를 할당한다. (model.cuda())
@@ -42,12 +44,17 @@ def train_sub_module(gpu_id, model_cfg, data_cfg, env_cfg):
 
     #distribution option
     if env_cfg['distributed']:
+        log_manager.logger.info('Set the rank.')
         set_rank(env_cfg)
+
+        log_manager.logger.info('Initalize the process group.')
         init_process_group(env_cfg)
 
     #create model(build)
-    model = build_model(model_cfg)
+    log_manager.logger.info('Build the model.')
+    model = build_model(model_cfg, log_manager)
 
+    log_manager.logger.info('Set the distribution and gpu options.')
     if torch.cuda.is_available():
         warnings.warn('You will use cpu and the training speed will very slow.')
     elif env_cfg['distributed']:
@@ -75,3 +82,5 @@ def train_sub_module(gpu_id, model_cfg, data_cfg, env_cfg):
         print('This is the case with single node with multi gpus in single processing, You will use all available gpus.')
         model.cuda()
         model = nn.parallel.DataParallel(model)
+    
+    

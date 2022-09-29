@@ -5,22 +5,18 @@ from base_classification import BaseClassification
 
 
 class AlexNet(BaseClassification):
-    """AlexNet Architecture                                                                   
-
-    Args:
-        backbone (nn.Module) : alexnet backbone model class
-        cls_head (nn.Module) : alexnet classification head model class
-        init_weight (bool) : option for weight initialization
+    """The AlexNet architecture.                                                                   
     """
 
-    def __init__(self, backbone, cls_head=None):
+    def __init__(self, backbone, cls_head=None, log_manager=None):
         """The initalization.
 
         Args:
             backbone (torch.nn.Module): The feature extractor.
             cls_head (torch.nn.Module, optional): The classification head. Defaults to None.
+            log_manager (builds.log.LogManager): The log manager. Defaults to None.
         """
-        super.__init__(backbone, cls_head)
+        super.__init__(backbone, cls_head, log_manager)
 
     def _forward_train(self, imgs, labels, **kwargs):
         """The train method.

@@ -30,7 +30,7 @@ class CrossEntropyLoss(BaseWeightedLoss):
         Returns:
             torch.Tensor: The cross entropy loss.
         """
-        if "weight" in kwargs and kwargs['weight']:
+        if "weight" in kwargs and kwargs['weight'] is not None:
             kwargs.update(dict(weight=torch.tensor(
                 kwargs['weight'], device=cls_scores.device)))
 

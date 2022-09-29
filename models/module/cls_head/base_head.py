@@ -18,7 +18,7 @@ class Base_Head(nn.Module, metaclass=ABCMeta):
         metaclass (ABCMeta, optional): The abstract class. Defaults to ABCMeta.
     """
 
-    def __init__(self, in_channels, num_class, loss_cls=dict(type='CrossEntropyLoss', loss_weight=1.0), multi_label=False):
+    def __init__(self, in_channels, num_class, loss_cls=dict(type='CrossEntropyLoss', loss_weight=1.0), multi_label=False, log_manager=None):
         """The initalization.
 
         Args:
@@ -26,6 +26,7 @@ class Base_Head(nn.Module, metaclass=ABCMeta):
             num_class (int): The number of class.
             loss_cls (dict, optional): The classification loss parameter. Defaults to dict(type='CrossEntropyLoss', loss_weight=1.0).
             multi_label (bool, optional): The multi label option. Defaults to False.
+            log_manager (builds.log.LogManager): The log manager. Defaults to None.
         """
         self.in_channels = in_channels
 
@@ -34,6 +35,7 @@ class Base_Head(nn.Module, metaclass=ABCMeta):
 
         self.loss_cls = build(loss_cls)
         self.multi_label = multi_label
+        self.log_manager = log_manager
 
     def loss(self, cls_scores, labels, **kwargs):
         """The loss operation.

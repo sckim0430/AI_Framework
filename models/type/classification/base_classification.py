@@ -12,19 +12,21 @@ class BaseClassification(nn.Module, metaclass=ABCMeta):
         torch.nn.Module: The torch class for definition of classification model.
     """
 
-    def __init__(self, backbone, neck=None, cls_head=None):
+    def __init__(self, backbone, neck=None, cls_head=None, log_manager=None):
         """The initalization.
 
         Args:
             backbone (torch.nn.Module): The feature extractor.
             neck (torch.nn.Module): The feature refinementor.
             cls_head (torch.nn.Module, optional): The classification head. Defaults to None.
+            log_manager (builds.log.LogManager): The log manager. Defaults to None.
         """
         super().__init__()
 
         self.backbone = backbone
         self.neck = neck
         self.cls_head = cls_head
+        self.log_manager = log_manager
 
     @abstractclassmethod
     def _forward_train(self, imgs, labels, **kwargs):

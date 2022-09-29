@@ -6,6 +6,7 @@ import torch.nn as nn
 
 from utils.checkpoint import load_checkpoint
 
+
 class AlexNet_Backbone(nn.Module):
     """The alexnet backbone.
 
@@ -13,7 +14,7 @@ class AlexNet_Backbone(nn.Module):
         nn.Module: The super class of base alexnet backbone.
     """
 
-    def __init__(self, in_channel=3, lrn_param=[5, 1e-4, 0.75, 1.0], pretrained=None, init_weight=True):
+    def __init__(self, in_channel=3, lrn_param=[5, 1e-4, 0.75, 1.0], pretrained=None, init_weight=True, log_manager=None):
         """The initalization.
 
         Args:
@@ -21,6 +22,7 @@ class AlexNet_Backbone(nn.Module):
             lrn_param (list[float], optional): The LRN parameter. Defaults to [5, 1e-4, 0.75, 1.0].
             pretrained (str, optional): The pretrained weight path or None. Defaults to None.
             init_weight (bool, optional): The initalization of the weights option. Defaults to True.
+            log_manager (builds.log.LogManager): The log manager. Defaults to None.
         """
         super(AlexNet_Backbone, self).__init__()
 
@@ -28,6 +30,7 @@ class AlexNet_Backbone(nn.Module):
         self.in_channel = in_channel
         self.lrn_param = lrn_param
         self.pretrained = pretrained
+        self.log_manager = log_manager
 
         self.conv1 = nn.Conv2d(self.in_channel, 96, 11, 4)
         self.conv2 = nn.Conv2d(96, 256, 5, 2)
@@ -80,13 +83,17 @@ class AlexNet_Backbone(nn.Module):
         Raises:
             TypeError : If pretrained type not in (None, str).
         """
-        if isinstance(self.pretrained,str):
-            logger = logging.getLogger()
-            logger.info('load model from : {}'.format(self.pretrained))
+        if isinstance(self.pretrained, str):
+            if self.log_manager is not None:
+                self.log_manager.logger.info(
+                    'load pretrained model from {} to initalize the weights'.format(self.pretrained))
 
-            load_checkpoint(self,self.pretrained)
+            load_checkpoint(self, self.pretrained)
 
         elif self.pretrained is None:
+            if self.log_manager is not None:
+                self.log_manager.logger.info('Initalize the weights')
+
             for m in self.modules():
                 if isinstance(m, nn.Conv2d):
                     nn.init.normal_(m.weight, 0, 0.01)
@@ -98,4 +105,3 @@ class AlexNet_Backbone(nn.Module):
             nn.init.constant_(self.conv5.bias, 1)
         else:
             raise TypeError('The pretrained type must be in (None, str).')
-

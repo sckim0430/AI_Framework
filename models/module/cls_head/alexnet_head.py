@@ -10,7 +10,7 @@ class AlexNet_Head(Base_Head):
     Args:
         Base_Head (base_head.Base_Head): The super class of the AlexNet head.
     """
-    def __init__(self, num_class=1000, in_channels=256, loss_cls=dict(type="CrossEntropy",loss_weight=1.0), multi_label=False, init_weight=True, dropout_ratio=0.5, pooling_type="avg"):
+    def __init__(self, num_class=1000, in_channels=256, loss_cls=dict(type="CrossEntropy",loss_weight=1.0), multi_label=False, init_weight=True, dropout_ratio=0.5, pooling_type="avg", log_manager= None):
         """The initalization.
 
         Args:
@@ -21,8 +21,9 @@ class AlexNet_Head(Base_Head):
             init_weight (bool, optional): The initalization of the weights option. Defaults to True.
             dropout_ratio (float, optional): The dropout ratio. Defaults to 0.5.
             pooling_type (str, optional): The global average pooling option. Defaults to "avg".
+            log_manager (builds.log.LogManager): The log manager. Defaults to None.
         """
-        super().__init__(num_class,in_channels,loss_cls,multi_label)
+        super().__init__(num_class,in_channels,loss_cls,multi_label,log_manager)
         self.dropout_ratio = dropout_ratio
         self.pooling_type = pooling_type
 
@@ -72,6 +73,9 @@ class AlexNet_Head(Base_Head):
     def init_weights(self):
         """The operation for initalization weights.
         """
+        if self.log_manager is not None:
+            self.log_manager.logger.info('Initalize the weights of AlexNet head.')
+
         for m in self.modules():
             if isinstance(m,nn.Linear):
                 nn.init.normal_(m.weight,0,0.01)

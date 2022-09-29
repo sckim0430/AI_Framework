@@ -32,9 +32,11 @@ def check_cfg(model_cfg, data_cfg, env_cfg, mode=True):
     #data_cfg check
     print('Check the data config file.')
 
+    exist_check(["dummy","batch_size","log_dir"],data_cfg)
+
     if mode:
         #train check mode
-        exist_check(["dummy", "batch_size", "epochs", "resume", "weight_dir"], data_cfg)
+        exist_check(["epochs", "resume", "weight_dir"], data_cfg)
 
         if data_cfg['resume'] is not None and "start_epoch" not in data_cfg:
             raise ValueError('The start_epoch option must be in data config when resume is not None.')
