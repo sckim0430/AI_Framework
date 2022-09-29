@@ -1,5 +1,7 @@
 """The build implementation.
 """
+import torch.optim as optim
+
 from models.type import *
 from models.module import *
 from utils.parse import parse_type
@@ -13,7 +15,7 @@ def build(cfg, log_manager=None):
         log_manager (builds.log.LogManager): The log manager. Defaults to None.
 
     Returns:
-        class: The class object.
+        nn.Module: The sub model object.
     """
     #parse type from config
     type, params = parse_type(cfg)
@@ -29,7 +31,7 @@ def build_model(cfg, log_manager=None):
         cfg (dict): The input config.
         log_manager (builds.log.LogManager): The log manager. Defaults to None.
     Returns:
-        class: The class object.
+        nn.Module: The model object.
     """
     #parse model config
     type, params = parse_type(cfg)
@@ -43,6 +45,24 @@ def build_model(cfg, log_manager=None):
     return eval(type)(**params)
 
 
+def build_optimizer(params, cfg):
+    """The operation for build optimizer.
+
+    Args:
+        params (generator): The model parameters.
+        cfg (dict): The input config.
+
+    Returns:
+        torch.optim: The optimizer object.
+    """
+    #parse optimizer config
+    type, params = parse_type(cfg)
+    params.update({'params':params})
+
+    #build optimizer
+    return optim.eval(type)(**params)
+
+
 def build_param(cfg, type='train'):
     """The operation for build parameter.
 
@@ -53,7 +73,6 @@ def build_param(cfg, type='train'):
     Returns:
         dict: The output config.
     """
-    assert 'evaluation' in cfg, "The config file must have 'evaluation' key."
     assert type in cfg['evaluation'] and type in (
         'train', 'validation', 'test'), "The type should be in ('train', 'validation', 'test') and config."
 
