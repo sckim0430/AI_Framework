@@ -9,28 +9,28 @@ import torch.multiprocessing as mp
 from torch.optim.lr_scheduler import StepLR
 
 from builds.build import build_model, build_optimizer
-from utils.set_env import set_rank, init_process_group
+from utils.environment import set_rank, init_process_group, set_device, set_model
 
 
-def train_module(model_cfg, data_cfg, env_cfg, log_manager):
+def train_module(model_cfg, data_cfg, env_cfg, logger):
     """The operation for train module.
 
     Args:
         model_cfg (dict): The model config.
         data_cfg (dict): The data config.
         env_cfg (dict): The environment config.
-        log_manager (builds.log.LogManager): The log manager.
+        logger (logging.RootLogger): The logger.
     """
 
     if env_cfg['multiprocessing_distributed']:
         mp.sqawn(train_sub_module, nprocs=env_cfg['ngpus_per_node'], args=(
-            model_cfg, data_cfg, env_cfg, log_manager))
+            model_cfg, data_cfg, env_cfg, logger))
     else:
         train_sub_module(env_cfg['gpu_id'], model_cfg,
-                         data_cfg, env_cfg, log_manager)
+                         data_cfg, env_cfg, logger)
 
 
-def train_sub_module(gpu_id, model_cfg, data_cfg, env_cfg, log_manager):
+def train_sub_module(gpu_id, model_cfg, data_cfg, env_cfg, logger):
     """The operation for sub train module.
 
     Args:
@@ -38,69 +38,71 @@ def train_sub_module(gpu_id, model_cfg, data_cfg, env_cfg, log_manager):
         model_cfg (dict): The model config.
         data_cfg (dict): The data config.
         env_cfg (dict): The environment config.
-        log_manager (builds.log.LogManager): The log manager.
+        logger (logging.RootLogger): The logger.
     """
-    #gpu : 현재 프로세스에서 사용하는 gpu id
-    #None인 경우에는 gpu를 사용할 수 있다면 전체 gpu 목록에 모델 weight를 할당한다. (model.cuda())
-    #특정 gpu가 지정된 경우에는 해당 gpu에만 모델 weight를 할당한다. (torch.cuda.set_device(gpu_id), model.cuda(gpu_id))
+    #set the gpu paramters
+    logger.info('Set the gpu parameters.')
     env_cfg.update({'gpu_id': gpu_id})
+    select_gpu = True if env_cfg['gpu_id'] is not None else False
+    is_cuda = torch.cuda.is_available()
+    device = set_device(env_cfg['gpu_id'])
 
     #distribution option
     if env_cfg['distributed']:
-        log_manager.logger.info('Set the rank.')
+        logger.info('Set the rank.')
         set_rank(env_cfg)
 
-        log_manager.logger.info('Initalize the process group.')
+        logger.info('Initalize the process group.')
         init_process_group(env_cfg)
 
-    #create model(build)
-    log_manager.logger.info('Build the model.')
-    model = build_model(model_cfg['model'], log_manager)
+        if is_cuda and select_gpu:
+            batch_size = int(data_cfg['batch_size']/env_cfg['ngpus_per_node'])
+            workers = int(
+                (env_cfg['workers']+env_cfg['ngpus_per_node']-1)/env_cfg['ngpus_per_node'])
 
-    log_manager.logger.info('Set the distribution and gpu options.')
-    if torch.cuda.is_available():
-        warnings.warn(
-            'You will use cpu and the training speed will very slow.')
-    elif env_cfg['distributed']:
-        if env_cfg['gpu_id'] is not None:
-            # When using a single GPU per process and per
-            # DistributedDataParallel, we need to divide the batch size
-            # ourselves based on the total number of GPUs of the current node.
-            print('This is the case with other nodes including the current node with multi gpus in multi processing. You will use {} gpu now.'.format(
-                env_cfg['gpu_id']))
-            torch.cuda.set_device(env_cfg['gpu_id'])
-            model.cuda(env_cfg['gpu_id'])
-            data_cfg.update(
-                {'batch_size': int(data_cfg['batch_size']/env_cfg['ngpus_per_node'])})
-            env_cfg.update({'workers': int(
-                (env_cfg['workers']+env_cfg['ngpus_per_node']-1)/env_cfg['ngpus_per_node'])})
-            model = nn.parallel.DistributedDataParallel(
-                model, device_ids=[env_cfg['gpu_id']])
-        else:
-            # DistributedDataParallel will divide and allocate batch_size to all
-            # available GPUs if device_ids are not set
-            print('This is the case with other nodes including the current node with a single gpu in multi processing. You will use all available gpus.')
-            model.cuda()
-            nn.parallel.DistributedDataParallel(model)
-    elif env_cfg['gpu_id'] is not None:
-        print('This is the case with single node with single gpu in single processing. You will use {} gpu now.'.format(
-            env_cfg['gpu_id']))
-        torch.cuda.set_device(env_cfg['gpu_id'])
-        model = model.cuda(env_cfg['gpu_id'])
-    else:
-        print('This is the case with single node with multi gpus in single processing, You will use all available gpus.')
-        model.cuda()
-        model = nn.parallel.DataParallel(model)
+            logger.info('Convert the batch size {} -> {} and workers {} -> {} by multi processing.'.format(
+                data_cfg['batch_size'], batch_size, env_cfg['workers'], workers))
+            data_cfg.update({'batch_size': batch_size})
+            env_cfg.update({'workers': workers})
+
+    #build model
+    logger.info('Build the model.')
+    model = build_model(model_cfg['model'], logger)
+
+    #set model
+    logger.info('Set the model.')
+    model = set_model(model, device, select_gpu=select_gpu,
+                      distributed=env_cfg['distributed'])
 
     #build optimizer & scheduler
-    log_manager.logger.info('Build the optimizer and learning rate scheduler.')
+    logger.info('Build the optimizer and learning rate scheduler.')
     optimizer = build_optimizer(model.parameters(), model_cfg['optimizer'])
-    # learninig rate will decayed by gamma every step_size epochs
+    #learninig rate will decayed by gamma every step_size epochs
     scheduler = StepLR(optimizer, step_size=30, gamma=0.1)
 
+    #initalize the best evaluation scores
+    best_eval = {k: 0 for k in model_cfg['params']
+                 ['evaluation']['validation'].keys()}
+
+    #load the resume model weight
     if data_cfg['resume'] is not None:
         if os.path.isfile(data_cfg['resume']):
-            
-            pass
+            logger.info('Load the resume checkpoint : {}.'.format(
+                data_cfg['resume']))
+
+            checkpoint = torch.load(data_cfg['resume'], map_location=device)
+
+            #update start epoch
+            data_cfg.upate({'start_epoch': checkpoint['epoch']})
+
+            #update best evaluation scores
+            for k in checkpoint:
+                if k not in ('epoch', 'architecture', 'model', 'optimizer', 'scheduler') and k not in best_eval.keys():
+                    logger.warning('There is no evaluation : {}'.format(k))
+                    continue
+
+                best_eval.update({k: checkpoint[k].to()})
+
         else:
-            warnings.warn('There is no checkpoint : {}'.format(data_cfg['resume']))
+            logger.warning(
+                'The wrong resume checkpoint : {}'.format(data_cfg['resume']))

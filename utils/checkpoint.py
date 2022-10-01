@@ -3,6 +3,7 @@
 from collections import OrderedDict
 import torch
 
+
 def load_checkpoint(model, filename):
     """The operation for load checkpoint.
 
@@ -11,12 +12,11 @@ def load_checkpoint(model, filename):
         filename (str): The pretrained model path.
     """
     src_state = model.state_dict()
-    dst_state = torch.load(filename)
 
-    if not isinstance(dst_state,OrderedDict):
-        dst_state = dst_state.state_dict()
+    dst_checkpoint = torch.load(filename)
+    dst_state = dst_checkpoint['model']
 
-    for k,v in dst_state.items():
+    for k, v in dst_state.items():
         if k in src_state:
             src_state[k] = v
 

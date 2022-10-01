@@ -8,15 +8,15 @@ class AlexNet(BaseClassification):
     """The AlexNet architecture.                                                                   
     """
 
-    def __init__(self, backbone, cls_head=None, log_manager=None):
+    def __init__(self, backbone, cls_head=None, logger=None):
         """The initalization.
 
         Args:
             backbone (torch.nn.Module): The feature extractor.
             cls_head (torch.nn.Module, optional): The classification head. Defaults to None.
-            log_manager (builds.log.LogManager): The log manager. Defaults to None.
+            logger (logging.RootLogger): The logger. Defaults to None.
         """
-        super.__init__(backbone, cls_head, log_manager)
+        super.__init__(backbone, cls_head, logger)
 
     def _forward_train(self, imgs, labels, **kwargs):
         """The train method.

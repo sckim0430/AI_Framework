@@ -1,5 +1,7 @@
 """The check file implementation.
 """
+
+
 def check_cfg(model_cfg, data_cfg, env_cfg, mode=True):
     """The operation for check the config.
 
@@ -32,17 +34,19 @@ def check_cfg(model_cfg, data_cfg, env_cfg, mode=True):
     #data_cfg check
     print('Check the data config file.')
 
-    exist_check(["dummy","batch_size","log_dir"],data_cfg)
+    exist_check(["dummy", "batch_size", "log_dir"], data_cfg)
 
     if mode:
         #train check mode
         exist_check(["epochs", "resume", "weight_dir"], data_cfg)
 
         if data_cfg['resume'] is not None and "start_epoch" not in data_cfg:
-            raise ValueError('The start_epoch option must be in data config when resume is not None.')
+            raise ValueError(
+                'The start_epoch option must be in data config when resume is not None.')
 
         if not data_cfg['dummy'] and "train_dir" not in data_cfg:
-            raise ValueError('The train directory must be in the config file when dummy is false.')
+            raise ValueError(
+                'The train directory must be in the config file when dummy is false.')
 
     else:
         #test check mode
@@ -62,6 +66,7 @@ def check_cfg(model_cfg, data_cfg, env_cfg, mode=True):
 
     print('done.')
 
+
 def exist_check(*keys, cfg):
     """The operation for check the exist.
 
@@ -75,6 +80,7 @@ def exist_check(*keys, cfg):
     for k in keys:
         if k not in cfg:
             raise ValueError('The {} must be in config.'.format(k))
+
 
 def check_cls(cls_scores, labels, num_class, multi_label=False):
     """The operation for check the classification scores and labels format.

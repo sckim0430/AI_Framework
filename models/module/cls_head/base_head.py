@@ -18,7 +18,7 @@ class Base_Head(nn.Module, metaclass=ABCMeta):
         metaclass (ABCMeta, optional): The abstract class. Defaults to ABCMeta.
     """
 
-    def __init__(self, in_channels, num_class, loss_cls=dict(type='CrossEntropyLoss', loss_weight=1.0), multi_label=False, log_manager=None):
+    def __init__(self, in_channels, num_class, loss_cls=dict(type='CrossEntropyLoss', loss_weight=1.0), multi_label=False, logger=None):
         """The initalization.
 
         Args:
@@ -26,7 +26,7 @@ class Base_Head(nn.Module, metaclass=ABCMeta):
             num_class (int): The number of class.
             loss_cls (dict, optional): The classification loss parameter. Defaults to dict(type='CrossEntropyLoss', loss_weight=1.0).
             multi_label (bool, optional): The multi label option. Defaults to False.
-            log_manager (builds.log.LogManager): The log manager. Defaults to None.
+            logger (logging.RootLogger): The logger. Defaults to None.
         """
         self.in_channels = in_channels
 
@@ -35,7 +35,7 @@ class Base_Head(nn.Module, metaclass=ABCMeta):
 
         self.loss_cls = build(loss_cls)
         self.multi_label = multi_label
-        self.log_manager = log_manager
+        self.logger = logger
 
     def loss(self, cls_scores, labels, **kwargs):
         """The loss operation.
@@ -68,7 +68,7 @@ class Base_Head(nn.Module, metaclass=ABCMeta):
         if isinstance(loss_cls, dict):
             losses.update(loss_cls)
         else:
-            losses['loss_cls'] = loss_cls
+            losses.update({'loss_cls': loss_cls})
 
         if kwargs['evaluation'] is not None:
             cls_scores_np = cls_scores.detach().cpu().numpy()
@@ -83,8 +83,8 @@ class Base_Head(nn.Module, metaclass=ABCMeta):
                 cls_scores_np = cvt2sps(cls_scores_np)
 
             for func_name in kwargs['evaluation']:
-                losses[func_name] = torch.tensor(eval(func_name)(labels_np, cls_scores_np,
-                                                                 **kwargs['evaluation'][func_name]), device=cls_scores.device)
+                losses.update({func_name: torch.tensor(eval(func_name)(
+                    labels_np, cls_scores_np, **kwargs['evaluation'][func_name]), device=cls_scores.device)})
 
         return losses
 

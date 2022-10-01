@@ -30,6 +30,7 @@
     "params": {
         "evaluation":{
             "train":{
+                "accuracy_score":null,
                 "top_k_accuracy_score": {
                     "k": 5
                 },
@@ -37,6 +38,7 @@
                 "recall_score": null
             },
             "validation":{
+                "accuracy_score":null,
                 "top_k_accuracy_score": {
                     "k": 5
                 },

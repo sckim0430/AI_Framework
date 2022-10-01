@@ -7,29 +7,29 @@ from models.module import *
 from utils.parse import parse_type
 
 
-def build(cfg, log_manager=None):
+def build(cfg, logger=None):
     """The operation for build.
 
     Args:
         cfg (dict): The input config.
-        log_manager (builds.log.LogManager): The log manager. Defaults to None.
+        logger (logging.RootLogger): The logger. Defaults to None.
 
     Returns:
         nn.Module: The sub model object.
     """
     #parse type from config
     type, params = parse_type(cfg)
-    params.update({'log_manager': log_manager})
+    params.update({'logger': logger})
 
     return eval(type)(**params)
 
 
-def build_model(cfg, log_manager=None):
+def build_model(cfg, logger=None):
     """The operation for build model.
 
     Args:
         cfg (dict): The input config.
-        log_manager (builds.log.LogManager): The log manager. Defaults to None.
+        logger (logging.RootLogger): The logger. Defaults to None.
     Returns:
         nn.Module: The model object.
     """
@@ -38,9 +38,9 @@ def build_model(cfg, log_manager=None):
 
     #build sub modules
     for k in params:
-        params.update({k: build(params[k], log_manager)})
+        params.update({k: build(params[k], logger)})
 
-    params.update({'log_manager': log_manager})
+    params.update({'logger': logger})
 
     return eval(type)(**params)
 
@@ -57,7 +57,7 @@ def build_optimizer(params, cfg):
     """
     #parse optimizer config
     type, params = parse_type(cfg)
-    params.update({'params':params})
+    params.update({'params': params})
 
     #build optimizer
     return optim.eval(type)(**params)

@@ -4,9 +4,9 @@ import os
 import json
 import argparse
 
-from builds.log import LogManager
+from utils.log import get_logger
 from utils.check import check_cfg
-from utils.set_env import set_deterministic_option, set_world_size
+from utils.environment import set_deterministic_option, set_world_size
 from tools.train_module import train_module
 
 
@@ -51,29 +51,29 @@ def main():
         f.close()
 
     #build log
-    log_dir = os.path.join(data_cfg['log_dir'],model_cfg['model']['type'])
+    log_dir = os.path.join(data_cfg['log_dir'], model_cfg['model']['type'])
 
     if not os.path.isdir(log_dir):
         os.mkdir(log_dir)
 
-    log_dir = os.path.join(log_dir,'train.log')
-    log_manager = LogManager(log_dir=log_dir)
+    log_dir = os.path.join(log_dir, 'train.log')
+    logger = get_logger(log_dir=log_dir)
 
     #check configuration
-    log_manager.logger.info('Check the configuaration files.')
+    logger.info('Check the configuaration files.')
     check_cfg(model_cfg, data_cfg, env_cfg, mode=True)
 
     #set random option from seed
     if env_cfg['seed'] is not None:
-        log_manager.logger.info('Set the deterministic options from seed.')
+        logger.info('Set the deterministic options from seed.')
         set_deterministic_option(env_cfg['seed'])
 
     #set world size
-    log_manager.logger.info('Set the world size.')
+    logger.info('Set the world size.')
     set_world_size(env_cfg)
 
     #train
-    train_module(model_cfg, data_cfg, env_cfg, log_manager)
+    train_module(model_cfg, data_cfg, env_cfg, logger)
 
 
 if __name__ == '__main__':

@@ -4,6 +4,7 @@ import os
 import random
 import numpy as np
 import torch
+import torch.nn as nn
 import torch.distributed as dist
 import torch.backends.cudnn as cudnn
 
@@ -16,7 +17,7 @@ def set_deterministic_option(seed):
     Args:
         seed (int): The seed.
     """
-    assert seed is not None
+    assert seed is not None, "When setting the deterministic option, the seed should not None."
 
     random.seed(seed)
     np.random.seed(seed)
@@ -33,11 +34,12 @@ def set_deterministic_option(seed):
 #GPU CASE
 
 #1. cpu
-#2. single gpu, single node, single process
-#3. single gpu, multi node, multi process
-#4. multi gpu, single node, single process
-#5. multi gpu, single node, multi process
-#6. multi gpu, multi node, multi process
+#2. single gpu, single node, single process(this, total)
+#3. single gpu, multi node, single process(this) / multi process(total)
+#4. multi gpu, single node, single process(this, total)
+#5. multi gpu, single node, multi process(this, total)
+#6. multi gpu, multi node, multi process(this, total)
+#7. multi gpu, multi node, single process(this) / multi process(total)
 ##############################################################################################################################
 #dist_url
 
@@ -60,8 +62,8 @@ def set_world_size(env_cfg):
         env_cfg.update({'world_size': int(os.environ['WORLD_SIZE'])})
 
     #multiprocessing_distributed is option for multi processing in this node case with 5 and 6.
-    #when world_size>1, then multi node case with 3.
-    #distributed is option for total multi process.
+    #when world_size>1, then multi node case with 3 and 6 and 7.
+    #distributed is option for multi process(total).
     env_cfg.update(
         {'distributed': env_cfg['world_size'] > 1 or env_cfg['multiprocessing_distributed']})
 
@@ -102,3 +104,62 @@ def init_process_group(env_cfg):
     """
     dist.init_process_group(init_method=env_cfg['dist_url'], backend=env_cfg['dist_backend'],
                             world_size=env_cfg['world_size'], rank=env_cfg['rank'])
+
+
+def set_device(gpu_id=None):
+    """The operation for set torch device.
+
+    Args:
+        gpu_id (int, optional): The gpu id. Defaults to None.
+
+    Returns:
+        torch.device: The torch device.
+    """
+    device = None
+
+    if torch.cuda.is_available():
+        if gpu_id is not None:
+            device = torch.device('cuda:{}'.foramt(gpu_id))
+            torch.cuda.set_device(device)
+        else:
+            device = torch.device('cuda')
+    elif torch.backends.mps.is_available():
+        device = torch.device('mps')
+    else:
+        device = torch.device('cpu')
+
+    return device
+
+
+def set_model(model, device, select_gpu=False, distributed=False):
+    """The operation for set model's distribution mode.
+
+    Args:
+        model (nn.Module): The model.
+        device (torch.device): The torch device.
+        select_gpu (bool, optional): The option for select gpu id. Defaults to False.
+        distributed (bool, optional): The option for distributed. Defaults to False.
+
+    Raises:
+        ValueError: If distributed gpu option is true, the gpu device should cuda.
+    
+    Returns:
+        nn.Module: The model.
+    """
+    is_cuda = torch.cuda.is_available()
+
+    if distributed:
+        if is_cuda:
+            model.to(device)
+            model = nn.parallel.DistributedDataParallel(
+                model, device_ids=[device])
+        else:
+            raise ValueError(
+                'If in cpu or mps mode, distributed option should be False.')
+    else:
+        model = model.to(device)
+
+        if is_cuda and not select_gpu:
+            model = nn.parallel.DataParallel(model, device_ids=[device])
+
+    return model
