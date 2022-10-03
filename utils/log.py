@@ -5,7 +5,7 @@ import warnings
 import logging
 
 
-def level_check(level=1):
+def level_check(level=3):
     """The operation for check log level.
 
     Args:
@@ -22,7 +22,7 @@ def level_check(level=1):
     return level
 
 
-def add_handler(handler, logger, level=1, format='%(name)s - %(message)s'):
+def add_handler(handler, logger, level=3, format='%(name)s - %(message)s'):
     """The operation for add log handler.
 
     Args:
@@ -43,7 +43,7 @@ def add_handler(handler, logger, level=1, format='%(name)s - %(message)s'):
     logger.addHandler(handler)
 
 
-def get_logger(log_level=1, stream_level=1, file_level=1, log_dir=None, format='%(name)s - %(message)s'):
+def get_logger(log_level=3, stream_level=3, file_level=3, log_dir=None, format='%(name)s - %(message)s'):
     """The operation for get logger.
 
     Args:
@@ -65,12 +65,13 @@ def get_logger(log_level=1, stream_level=1, file_level=1, log_dir=None, format='
 
     #set stream handler
     stream_handler = logging.StreamHandler()
-    add_handler(stream_handler, stream_level, format, logger)
+    add_handler(handler=stream_handler, logger=logger,
+                level=stream_level, format=format)
 
     #set file handler
     if log_dir is not None and os.path.isfile(log_dir):
         file_handler = logging.FileHandler(log_dir)
-        add_handler(file_handler, file_level,
-                    format='%(asctime)s - %(name)s - %(levelname)s - %(message)s', logger=logger)
+        add_handler(handler=file_handler, logger=logger, level=file_level,
+                    format='%(asctime)s - %(name)s - %(levelname)s - %(message)s')
 
     return logger

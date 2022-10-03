@@ -8,10 +8,14 @@ def parse_type(cfg):
     Args:
         cfg (dict): The input config.
 
+    Raises:
+        ValueError: The config file should have 'type' key.
+
     Returns:
         str, dict: The type and parameters.
     """
-    assert "type" in cfg, "The config file should have 'type' key."
+    if "type" not in cfg:
+        raise ValueError("The config file should have 'type' key.")
 
     parsed_cfg = cfg.copy()
 

@@ -2,7 +2,7 @@
     "model": {
         "type": "AlexNet",
         "backbone": {
-            "type": "AlexNet",
+            "type": "AlexNet_Backbone",
             "in_channel": 3,
             "lrn_param": [
                 5,
@@ -15,14 +15,15 @@
         },
         "cls_head": {
             "type": "AlexNet_Head",
+            "in_size":6,
             "in_channel": 256,
             "num_class": 1000,
             "dropout_ratio": 0.5,
-            "pooling_type": "avg",
             "loss_cls": {
                 "type": "CrossEntropyLoss",
                 "loss_weight": 1.0
             },
+            "avg_pooling":true,
             "multi_label":false,
             "init_weight": true
         }
@@ -65,5 +66,44 @@
         "lr": 0.01,
         "momentum": 0.9,
         "weight_decay": 5e-4
+    },
+    "pipeline":{
+        "train":{
+            "RandomResizedCrop":{
+                "size":224
+            },
+            "RandomHorizontalFlip":null,
+            "ToTensor":null,
+            "Normalize":{
+                "mean":[0.485, 0.456, 0.406],
+                "std" : [0.229, 0.224, 0.225]
+            }
+        },
+        "validation":{
+            "Resize":{
+                "size":256
+            },
+            "CenterCrop":{
+                "size":224
+            },
+            "ToTensor":null,
+            "Normalize":{
+                "mean":[0.485, 0.456, 0.406],
+                "std" : [0.229, 0.224, 0.225]
+            }
+        },
+        "test":{
+            "Resize":{
+                "size":256
+            },
+            "CenterCrop":{
+                "size":224
+            },
+            "ToTensor":null,
+            "Normalize":{
+                "mean":[0.485, 0.456, 0.406],
+                "std" : [0.229, 0.224, 0.225]
+            }
+        }
     }
 }

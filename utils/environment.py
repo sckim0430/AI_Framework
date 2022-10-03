@@ -1,14 +1,13 @@
 """The setting environment implementation.
 """
 import os
+import warnings
 import random
 import numpy as np
 import torch
 import torch.nn as nn
 import torch.distributed as dist
 import torch.backends.cudnn as cudnn
-
-import warnings
 
 
 def set_deterministic_option(seed):

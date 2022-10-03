@@ -9,5 +9,6 @@
     "batch_size" : 64,
     "epochs": 100,
     "start_epoch": null,
-    "resume": null
+    "resume": null,
+    "dataset":"ImageNet"
 }

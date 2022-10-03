@@ -11,10 +11,14 @@ def cvt2cat(array, num_class=None, dtype='float32'):
         num_class (int, optional): The number of class. Defaults to None.
         dtype (str): The data type.
 
+    Raises:
+        ValueError: The array should have 1-dimension.
+
     Returns:
         np.ndarray: The categorical labels.
     """
-    assert array.ndim == 1, "Array should have 1-dimension."
+    if array.ndim!=1:
+        raise ValueError('The array should have 1-dimension.')
 
     if num_class is None:
         num_class = array.max()+1
@@ -28,9 +32,13 @@ def cvt2sps(array):
     Args:
         array (np.ndarray): The input labels.
 
+    Raises:
+        ValueError: The array should have 2-dimension.
+
     Returns:
         np.ndarray: The sparse labels.
     """
-    assert array.ndim == 2, "Array should have 2-dimension."
+    if array.ndim!=2:
+        raise ValueError('The array should have 2-dimension.')
 
     return np.argmax(array, axis=1)

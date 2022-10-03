@@ -74,6 +74,7 @@ class AlexNet_Backbone(nn.Module):
 
         x = self.conv5(x)
         x = self.relu(x)
+        x = self.max_pooling(x)
 
         return x
 

@@ -7,8 +7,12 @@ import torch
 import torch.nn as nn
 import torch.multiprocessing as mp
 from torch.optim.lr_scheduler import StepLR
+from torch.utils.data import DataLoader
+from torch.utils.data.distributed import DistributedSampler
+import torchvision.transforms as transforms
+import torchvision.datasets as datasets
 
-from builds.build import build_model, build_optimizer
+from builds.build import build_model, build_optimizer, build_pipeline, build_dataset
 from utils.environment import set_rank, init_process_group, set_device, set_model
 
 
@@ -77,32 +81,80 @@ def train_sub_module(gpu_id, model_cfg, data_cfg, env_cfg, logger):
     #build optimizer & scheduler
     logger.info('Build the optimizer and learning rate scheduler.')
     optimizer = build_optimizer(model.parameters(), model_cfg['optimizer'])
+
     #learninig rate will decayed by gamma every step_size epochs
     scheduler = StepLR(optimizer, step_size=30, gamma=0.1)
 
     #initalize the best evaluation scores
-    best_eval = {k: 0 for k in model_cfg['params']
-                 ['evaluation']['validation'].keys()}
+    best_evaluation = {k: 0 for k in model_cfg['params']
+                       ['evaluation']['validation'].keys()}
 
     #load the resume model weight
     if data_cfg['resume'] is not None:
         if os.path.isfile(data_cfg['resume']):
-            logger.info('Load the resume checkpoint : {}.'.format(
+            logger.info('Load the resume checkpoint : {}'.format(
                 data_cfg['resume']))
 
             checkpoint = torch.load(data_cfg['resume'], map_location=device)
 
-            #update start epoch
-            data_cfg.upate({'start_epoch': checkpoint['epoch']})
+            if model_cfg['model'] == checkpoint['architecture']:
+                #update start epoch
+                data_cfg.upate({'start_epoch': checkpoint['epoch']})
 
-            #update best evaluation scores
-            for k in checkpoint:
-                if k not in ('epoch', 'architecture', 'model', 'optimizer', 'scheduler') and k not in best_eval.keys():
-                    logger.warning('There is no evaluation : {}'.format(k))
-                    continue
+                #update best evaluation scores
+                for k in checkpoint['best_evaluation']:
+                    if k in best_evaluation:
+                        best_evaluation.update(
+                            {k: checkpoint['best_evaluation'][k].to(device)})
+                    else:
+                        warnings.warn(
+                            'There is not best evaluation key : {}'.format(k))
 
-                best_eval.update({k: checkpoint[k].to()})
-
+                #load model, optimizer, scheduler state dict
+                model.load_state_dict(checkpoint['model'])
+                optimizer.load_state_dict(checkpoint['optimizer'])
+                scheduler.load_state_dict(checkpoint['scheduler'])
+            else:
+                logger.warning(
+                    'The resume checkpoint architecture does not match model config architecture. The resume checkpoint can not be loaded.')
         else:
             logger.warning(
-                'The wrong resume checkpoint : {}'.format(data_cfg['resume']))
+                'The resume checkpoint have wrong path with {}. The resume checkpoint can not be loaded'.format(data_cfg['resume']))
+
+    #generate the dataset
+    if data_cfg['dummy']:
+        logger.info('Generate the dummy data.')
+
+        train_dataset = datasets.FakeData(
+            1000000, (3, 224, 224), 1000, transforms.ToTensor())
+        val_dataset = datasets.FakeData(
+            50000, (3, 224, 224), 1000, transforms.ToTensor())
+    else:
+        logger.info('Generate the train/validate data.')
+
+        train_pipeline = build_pipeline(model_cfg['pipeline'], mode="train")
+        val_pipeline = build_pipeline(model_cfg['pipeline'], mode="validation")
+
+        train_dataset = build_dataset(
+            dataset=data_cfg['dataset'], root=data_cfg['train_dir'], transform=train_pipeline, split='train')
+        val_dataset = build_dataset(
+            data_cfg['dataset'], root=data_cfg['val_dir'], transforms=val_pipeline, split='val')
+
+    #generate the sampler
+    if env_cfg['distributed']:
+        train_sampler = DistributedSampler(train_dataset)
+        val_sampler = DistributedSampler(
+            val_dataset, shuffle=False, drop_last=True)
+    else:
+        train_sampler = None
+        val_sample = None
+
+    #load the dataset loader
+    train_loader = DataLoader(dataset=train_dataset, batch_size=data_cfg['batch_size'], shuffle=(
+        train_sampler is None), num_workers=env_cfg['workers'], pin_memory=True, sampler=train_sampler)
+    val_loader = DataLoader(dataset=val_dataset, batch_size=data_cfg['batch_size'],
+                            shuffle=False, num_workers=env_cfg['workers'], pin_memory=True, sampler=val_sampler)
+
+    for epoch in range(data_cfg['start_epoch'], data_cfg['epochs']):
+
+        pass

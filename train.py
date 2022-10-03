@@ -57,7 +57,7 @@ def main():
         os.mkdir(log_dir)
 
     log_dir = os.path.join(log_dir, 'train.log')
-    logger = get_logger(log_dir=log_dir)
+    logger = get_logger(log_level=1,stream_level=1,file_level=2,log_dir=log_dir)
 
     #check configuration
     logger.info('Check the configuaration files.')

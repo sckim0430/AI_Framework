@@ -1,6 +1,8 @@
 """The build implementation.
 """
-import torch.optim as optim
+from torch.optim import *
+from torchvision.transforms import *
+from torchvision.datasets import *
 
 from models.type import *
 from models.module import *
@@ -45,11 +47,11 @@ def build_model(cfg, logger=None):
     return eval(type)(**params)
 
 
-def build_optimizer(params, cfg):
+def build_optimizer(model_parameters, cfg):
     """The operation for build optimizer.
 
     Args:
-        params (generator): The model parameters.
+        model_parameters (generator): The model parameters.
         cfg (dict): The input config.
 
     Returns:
@@ -57,26 +59,63 @@ def build_optimizer(params, cfg):
     """
     #parse optimizer config
     type, params = parse_type(cfg)
-    params.update({'params': params})
+    params.update({'params': model_parameters})
 
     #build optimizer
-    return optim.eval(type)(**params)
+    return eval(type)(**params)
 
 
-def build_param(cfg, type='train'):
+def build_param(cfg, mode='train'):
     """The operation for build parameter.
 
     Args:
         cfg (dict): The input config.
-        type (str, optional): The parameter about type. Defaults to 'train'.
+        mode (str, optional): The parameter about mode. Defaults to 'train'.
+
+    Raises:
+        ValueError: The mode should be in train/validation/test.
 
     Returns:
         dict: The output config.
     """
-    assert type in cfg['evaluation'] and type in (
-        'train', 'validation', 'test'), "The type should be in ('train', 'validation', 'test') and config."
+    if mode not in ('train','validation','test'):
+        raise ValueError("The mode should be in ('train', 'validation', 'test').")
 
     cfg_param = cfg.copy()
-    cfg_param.update({'evaluation': cfg_param['evaluation'][type]})
+    cfg_param.update({'evaluation': cfg_param['evaluation'][mode]})
 
     return cfg_param
+
+def build_pipeline(cfg, mode='train'):
+    """The operation for build pipeline.
+
+    Args:
+        cfg (dict): The input config.
+        mode (str, optional): The parameter about mode. Defaults to 'train'.
+
+    Raises:
+        ValueError: The mode should be in train/validation/test.
+
+    Returns:
+        torchvision.transforms.Compose: The pipeline.
+    """
+    if mode not in ('train','validation','test'):
+        raise ValueError("The mode should be in ('train', 'validation', 'test').")
+
+    tf_list = []
+
+    for k in cfg[mode]:
+        tf_list.append(eval(k)(**cfg[mode][k]))
+
+    return Compose(tf_list)
+
+def build_dataset(dataset='ImageNet',**kwargs):
+    """The operation for build dataset.
+
+    Args:
+        dataset (str, optional): The dataset name. Defaults to 'ImageNet'.
+
+    Returns:
+        torchvision.datasets: The dataset.
+    """
+    return eval(dataset)(**kwargs)

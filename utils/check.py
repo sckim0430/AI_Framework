@@ -16,12 +16,13 @@ def check_cfg(model_cfg, data_cfg, env_cfg, mode=True):
     """
     #model_cfg check
     print('Check the model config file.')
-    exist_check(["model", "params", "optimizer"], model_cfg)
+    exist_check(["model", "params", "optimizer","pipeline"], model_cfg)
     exist_check(["type"], model_cfg['model'])
-    exist_check(["type"], model_cfg['optimizer'])
     exist_check(["evaluation", "loss"], model_cfg['params'])
     exist_check(["train", "validation", "test"],
                 model_cfg['params']['evaluation'])
+    exist_check(["type"], model_cfg['optimizer'])
+    exist_check(["train","validation","test"],model_cfg['pipeline'])
 
     for k in model_cfg['model'].keys():
         if k == "type":
@@ -42,11 +43,11 @@ def check_cfg(model_cfg, data_cfg, env_cfg, mode=True):
 
         if data_cfg['resume'] is not None and "start_epoch" not in data_cfg:
             raise ValueError(
-                'The start_epoch option must be in data config when resume is not None.')
+                'The start_epoch key must be in data config when resume is not None.')
 
-        if not data_cfg['dummy'] and "train_dir" not in data_cfg:
+        if not data_cfg['dummy'] and ("train_dir" not in data_cfg or "val_dir" not in data_cfg):
             raise ValueError(
-                'The train directory must be in the config file when dummy is false.')
+                'The train/validation directory key must be in the config file when dummy is false.')
 
     else:
         #test check mode
@@ -54,7 +55,7 @@ def check_cfg(model_cfg, data_cfg, env_cfg, mode=True):
 
         if not data_cfg['dummy'] and "test_dir" not in data_cfg:
             raise ValueError(
-                'The test directory must be in the config file, and the directory must exist.')
+                'The test directory key must be in the config file, and the directory must exist.')
 
     print('done.')
 
@@ -79,10 +80,10 @@ def exist_check(*keys, cfg):
     """
     for k in keys:
         if k not in cfg:
-            raise ValueError('The {} must be in config.'.format(k))
+            raise ValueError('The {} key must be in config.'.format(k))
 
 
-def check_cls(cls_scores, labels, num_class, multi_label=False):
+def check_cls_label(cls_scores, labels, num_class, multi_label=False):
     """The operation for check the classification scores and labels format.
 
     Args:

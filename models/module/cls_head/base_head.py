@@ -7,7 +7,7 @@ import torch.nn as nn
 
 from builds.build import build
 from utils.convert import cvt2sps
-from utils.check import check_cls
+from utils.check import check_cls_label
 
 
 class Base_Head(nn.Module, metaclass=ABCMeta):
@@ -18,22 +18,47 @@ class Base_Head(nn.Module, metaclass=ABCMeta):
         metaclass (ABCMeta, optional): The abstract class. Defaults to ABCMeta.
     """
 
-    def __init__(self, in_channels, num_class, loss_cls=dict(type='CrossEntropyLoss', loss_weight=1.0), multi_label=False, logger=None):
+    def __init__(self, in_size, in_channels, num_class, loss_cls=dict(type='CrossEntropyLoss', loss_weight=1.0), avg_pooling=True, multi_label=False, logger=None):
         """The initalization.
 
         Args:
+            in_size (int|list[int], optional): The input size.
             in_channels (int): The input channels.
             num_class (int): The number of class.
             loss_cls (dict, optional): The classification loss parameter. Defaults to dict(type='CrossEntropyLoss', loss_weight=1.0).
+            avg_pooling (bool, optional): The average pooling option for input featrue. Defaults to True.
             multi_label (bool, optional): The multi label option. Defaults to False.
             logger (logging.RootLogger): The logger. Defaults to None.
+
+        Raises:
+            ValueError: The number of class should more than 2.
         """
+        if isinstance(in_size, int):
+            self.in_height = self.in_widht = in_size
+        elif isinstance(in_size, list):
+            if len(in_size) == 2:
+                self.in_height = in_size[0]
+                self.in_width = in_size[1]
+            else:
+                raise ValueError(
+                    'If in_size is the list type, length of the in_size should be 2.')
+        else:
+            raise TypeError('Only in_size support int and list[int] type.')
+
         self.in_channels = in_channels
 
-        assert num_class >= 2, "Number of the class must more than 2."
+        if num_class<2:
+            raise ValueError('The number of class must more than 2.')
         self.num_class = num_class
 
         self.loss_cls = build(loss_cls)
+
+        self.avg_pooling = None
+
+        if avg_pooling:
+            self.avg_pooling = nn.AdaptiveAvgPool2d(
+                (self.in_height, self.in_width))
+
         self.multi_label = multi_label
         self.logger = logger
 
@@ -58,7 +83,7 @@ class Base_Head(nn.Module, metaclass=ABCMeta):
 
         N : num of class(>=2), B : batch size, R : random
         """
-        check_cls(cls_scores, labels, self.num_calss, self.multi_label)
+        check_cls_label(cls_scores, labels, self.num_calss, self.multi_label)
 
         losses = dict()
 

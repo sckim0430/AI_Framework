@@ -25,10 +25,14 @@ class AlexNet(BaseClassification):
             imgs (torch.Tensor): The input images.
             labels (torch.Tensor): The input labels.
 
+        Raises:
+            ValueError: The model should have classification head.
+
         Returns:
             dict: The loss function value.
         """
-        assert self.with_cls_head, "Alexnet should have classification head."
+        if not self.with_cls_head:
+            raise ValueError("The model should have classification head.")
 
         losses = dict()
 

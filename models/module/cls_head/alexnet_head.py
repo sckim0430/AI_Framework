@@ -10,31 +10,26 @@ class AlexNet_Head(Base_Head):
     Args:
         Base_Head (base_head.Base_Head): The super class of the AlexNet head.
     """
-    def __init__(self, num_class=1000, in_channels=256, loss_cls=dict(type="CrossEntropy",loss_weight=1.0), multi_label=False, init_weight=True, dropout_ratio=0.5, pooling_type="avg", logger= None):
+    def __init__(self, num_class=1000, in_size=6, in_channels=256, loss_cls=dict(type="CrossEntropy",loss_weight=1.0), avg_pooling=True, multi_label=False, init_weight=True, dropout_ratio=0.5, logger= None):
         """The initalization.
 
         Args:
             num_class (int, optional): The number of class. Defaults to 1000.
-            in_channel (int, optional): The input channels. Defaults to 256.
+            in_size (int|list[int], optional): The input size. Defaults to 6.
+            in_channels (int, optional): The input channels. Defaults to 256.
             loss_cls (dict, optional): The classification loss parameter. Defaults to dict(type='CrossEntropyLoss', loss_weight=1.0).
+            avg_pooling (bool, optional): The average pooling option for input featrue. Defaults to True.
             multi_label (bool, optional): The multi label option. Defaults to False.
             init_weight (bool, optional): The initalization of the weights option. Defaults to True.
             dropout_ratio (float, optional): The dropout ratio. Defaults to 0.5.
-            pooling_type (str, optional): The global average pooling option. Defaults to "avg".
             logger (logging.RootLogger): The logger. Defaults to None.
         """
-        super().__init__(num_class,in_channels,loss_cls,multi_label,logger)
+        super().__init__(num_class,in_size, in_channels,loss_cls,avg_pooling,multi_label,logger)
         self.dropout_ratio = dropout_ratio
-        self.pooling_type = pooling_type
 
-        self.fc1 = nn.Linear(6*6*self.in_channels, 4096)
+        self.fc1 = nn.Linear(self.in_height*self.in_width*self.in_channels, 4096)            
         self.fc2 = nn.Linear(4096, 4096)
         self.fc3 = nn.Linear(4096, self.num_class)
-
-        if self.pooling_type == "avg":
-            self.pooling = nn.AdaptiveAvgPool2d(6)
-        else:
-            self.pooling = nn.MaxPool2d(3, 2)
 
         self.flatten = nn.Flatten()
         self.relu = nn.ReLU(inplace=True)
@@ -55,7 +50,9 @@ class AlexNet_Head(Base_Head):
         Returns:
             torch.Tensor: The output features.
         """
-        x = self.pooling(x)
+        if self.avg_pooling is not None:
+            x = self.avg_pooling(x)
+
         x = self.flatten(x)
 
         x = self.fc1(x)
