@@ -156,5 +156,7 @@ def train_sub_module(gpu_id, model_cfg, data_cfg, env_cfg, logger):
                             shuffle=False, num_workers=env_cfg['workers'], pin_memory=True, sampler=val_sampler)
 
     for epoch in range(data_cfg['start_epoch'], data_cfg['epochs']):
+        if env_cfg['distributed']:
+            train_sampler.set_epoch(epoch)
 
-        pass
+        

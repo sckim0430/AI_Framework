@@ -431,7 +431,6 @@ class Summary(Enum):
     SUM = 2
     COUNT = 3
 
-
 class AverageMeter(object):
     """Computes and stores the average and current value"""
 
@@ -485,7 +484,6 @@ class AverageMeter(object):
 
         return fmtstr.format(**self.__dict__)
 
-
 class ProgressMeter(object):
     def __init__(self, num_batches, meters, prefix=""):
         self.batch_fmtstr = self._get_batch_fmtstr(num_batches)
@@ -506,7 +504,6 @@ class ProgressMeter(object):
         num_digits = len(str(num_batches // 1))
         fmt = '{:' + str(num_digits) + 'd}'
         return '[' + fmt + '/' + fmt.format(num_batches) + ']'
-
 
 def accuracy(output, target, topk=(1,)):
     """Computes the accuracy over the k top predictions for the specified values of k"""
