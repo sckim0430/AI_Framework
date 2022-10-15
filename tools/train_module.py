@@ -2,9 +2,11 @@
 """
 import os
 import warnings
+from time import time
 
 import torch
 import torch.nn as nn
+import torch.distributed as dist
 import torch.multiprocessing as mp
 from torch.optim.lr_scheduler import StepLR
 from torch.utils.data import DataLoader
@@ -12,9 +14,11 @@ from torch.utils.data.distributed import DistributedSampler
 import torchvision.transforms as transforms
 import torchvision.datasets as datasets
 
-from builds.build import build_model, build_optimizer, build_pipeline, build_dataset
+from builds.build import build_model, build_optimizer, build_pipeline, build_dataset, build_param
 from utils.environment import set_rank, init_process_group, set_device, set_model
-
+from utils.parse import parse_loss_eval
+from utils.display import display
+from utils.AverageMeter import AverageMeter, MetricMeter
 
 def train_module(model_cfg, data_cfg, env_cfg, logger):
     """The operation for train module.
@@ -25,7 +29,7 @@ def train_module(model_cfg, data_cfg, env_cfg, logger):
         env_cfg (dict): The environment config.
         logger (logging.RootLogger): The logger.
     """
-
+    #run the train module
     if env_cfg['multiprocessing_distributed']:
         mp.sqawn(train_sub_module, nprocs=env_cfg['ngpus_per_node'], args=(
             model_cfg, data_cfg, env_cfg, logger))
@@ -56,7 +60,7 @@ def train_sub_module(gpu_id, model_cfg, data_cfg, env_cfg, logger):
         logger.info('Set the rank.')
         set_rank(env_cfg)
 
-        logger.info('Initalize the process group.')
+        logger.info('Initalize the distributed process group.')
         init_process_group(env_cfg)
 
         if is_cuda and select_gpu:
@@ -142,6 +146,7 @@ def train_sub_module(gpu_id, model_cfg, data_cfg, env_cfg, logger):
 
     #generate the sampler
     if env_cfg['distributed']:
+        logger.info('Set the train/validation sampler.')
         train_sampler = DistributedSampler(train_dataset)
         val_sampler = DistributedSampler(
             val_dataset, shuffle=False, drop_last=True)
@@ -150,13 +155,114 @@ def train_sub_module(gpu_id, model_cfg, data_cfg, env_cfg, logger):
         val_sample = None
 
     #load the dataset loader
+    logger.info('Set the train/validation data loader.')
     train_loader = DataLoader(dataset=train_dataset, batch_size=data_cfg['batch_size'], shuffle=(
         train_sampler is None), num_workers=env_cfg['workers'], pin_memory=True, sampler=train_sampler)
     val_loader = DataLoader(dataset=val_dataset, batch_size=data_cfg['batch_size'],
                             shuffle=False, num_workers=env_cfg['workers'], pin_memory=True, sampler=val_sampler)
 
+    #get train/validation params
+    train_freq = data_cfg['train_freq'] if 'train_freq' in data_cfg else 5
+    val_freq = data_cfg['val_freq'] if 'val_freq' in data_cfg else 5
+
+    train_params = build_param(model_cfg['params'],mode='train')
+    val_params = build_param(model_cfg['params'],mode='validation')
+
+    logger.info('Train start.')
     for epoch in range(data_cfg['start_epoch'], data_cfg['epochs']):
         if env_cfg['distributed']:
             train_sampler.set_epoch(epoch)
 
+        train(train_loader, model, train_params, optimizer, epoch, device, train_freq)
+
+        if epoch%val_freq==0:
+            validate(val_loader, model, val_params, epoch, device, best_evaluation,distributed=env_cfg['distributed'])
+
+        scheduler.step()
+
+def train(data_loader, model, params, optimizer, epoch, device,train_freq):
+    """The operation for every epoch call.
+
+    Args:
+        data_loader (torch.utils.data.DataLoader): The train data loader.
+        model (nn.Module): The model.
+        params (dict): The train parameters.
+        optimizer (Optimizer): The optimizer.
+        epoch (int): The epoch.
+        device (torch.device): The device.
+        train_freq (int): The train frequent.
+    """
+    mode = 'train'
+    data_time = AverageMeter('data load time',prefix=mode)
+    batch_time = AverageMeter('batch inference time',prefix=mode)
+    metrics = MetricMeter(prefix=mode)
+
+    model.train()
+    end = time()
+    #train loop
+    for i, (images,targets) in enumerate(data_loader):
+        #data load time update
+        data_time.update(time()-end)
+
+        images.to(device,non_blocking=True)
+        targets.to(device,non_blocking=True)
         
+        #get output[losses, evaluations, .., etc.]
+        output = model(images,targets,return_loss=True,**params)
+
+        #output update
+        metrics.update(output)
+
+        #compute gradient and optimizer step
+        optimizer.zero_grad()
+
+        for k in output:
+            if 'loss' in k:
+                output[k].backward()
+
+        optimizer.step()
+        
+        #elapsed time update
+        batch_time.update(time()-end)
+        end = time()
+
+        if i%train_freq==0:
+            display(epoch, len(data_loader), i+1, metrics, data_time, batch_time)
+
+def validate(data_loader, model, params, epoch, device, best_evaluation,distributed=False):
+    def run_validate(loader,start=0):
+        with torch.no_grad():
+            end = time()
+
+            for i, (images, targets) in enumerate(loader):
+                #data load time update
+                data_time.update(time()-end)
+                
+                images.to(device,non_blocking=True)
+                targets.to(device.non_blocking=True)
+
+                #get validation params and output[losses, evaluations, .., etc.]
+                output = model(images,targets,return_loss=True,**params)
+
+                #output update
+                metrics.update(output)
+
+                #elapsed time update
+                batch_time.update(time()-end)
+                end = time()
+
+    mode = 'validation'
+    data_time = AverageMeter('data load time',prefix=mode)
+    batch_time = AverageMeter('batch inference time',prefix=mode)
+    metrics = MetricMeter(prefix=mode)
+
+    model.eval()
+    run_validate(data_loader,start=0)
+
+    if distributed:
+        data_time.all_reduce(device=device)
+        batch_time.all_reduce(device=device)
+        metrics.all_reduce(device=device)
+
+    #aux validation set 처리
+    # display(epoch,len(data_loader),len(data_loader),metrics, data_time, batch_time)

@@ -8,6 +8,8 @@
     "dummy": false,
     "batch_size" : 64,
     "epochs": 100,
+    "train_freq":5,
+    "val_freq":5,
     "start_epoch": null,
     "resume": null,
     "dataset":"ImageNet"

@@ -78,8 +78,8 @@ def build_param(cfg, mode='train'):
     Returns:
         dict: The output config.
     """
-    if mode not in ('train','validation','test'):
-        raise ValueError("The mode should be in ('train', 'validation', 'test').")
+   if mode not in cfg['evaluation']:
+        raise ValueError("The '{}' should be in config file.".format(mode))
 
     cfg_param = cfg.copy()
     cfg_param.update({'evaluation': cfg_param['evaluation'][mode]})
@@ -99,8 +99,8 @@ def build_pipeline(cfg, mode='train'):
     Returns:
         torchvision.transforms.Compose: The pipeline.
     """
-    if mode not in ('train','validation','test'):
-        raise ValueError("The mode should be in ('train', 'validation', 'test').")
+    if mode not in cfg:
+            raise ValueError("The '{}' should be in config file.".format(mode))
 
     tf_list = []
 
