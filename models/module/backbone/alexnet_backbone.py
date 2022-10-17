@@ -4,7 +4,7 @@ import logging
 
 import torch.nn as nn
 
-from utils.checkpoint import load_checkpoint
+from utils.checkpoint import load_pretrained_checkpoint
 
 
 class AlexNet_Backbone(nn.Module):
@@ -89,7 +89,7 @@ class AlexNet_Backbone(nn.Module):
                 self.logger.info(
                     'load pretrained model from {} to initalize the weights'.format(self.pretrained))
 
-            load_checkpoint(self, self.pretrained)
+            load_pretrained_checkpoint(self, self.pretrained)
 
         elif self.pretrained is None:
             if self.logger is not None:

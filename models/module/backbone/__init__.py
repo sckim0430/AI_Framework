@@ -1,3 +1,3 @@
-from alexnet_backbone import *
+from .alexnet_backbone import *
 
 __all__ = ['AlexNet_Backbone']

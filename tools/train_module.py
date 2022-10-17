@@ -3,6 +3,7 @@
 import os
 import warnings
 from time import time
+from collections import defaultdict
 
 import torch
 import torch.nn as nn
@@ -19,6 +20,7 @@ from utils.environment import set_rank, init_process_group, set_device, set_mode
 from utils.parse import parse_loss_eval
 from utils.display import display
 from utils.AverageMeter import AverageMeter, MetricMeter
+from utils.checkpoint import save_checkpoint
 
 def train_module(model_cfg, data_cfg, env_cfg, logger):
     """The operation for train module.
@@ -182,9 +184,11 @@ def train_sub_module(gpu_id, model_cfg, data_cfg, env_cfg, logger):
         else:
             train(train_loader, model, train_params, optimizer, epoch, device, train_freq)
 
+        is_best = defaultdict(bool)
+
         try:
             if validate_mode and epoch%val_freq==0:
-                validate(val_loader, model, val_params, epoch, device, best_evaluation,env_cfg['distributed'],env_cfg['world_size'])
+                is_best.update(validate(val_loader, model, val_params, epoch, device, best_evaluation,env_cfg['distributed'],env_cfg['world_size']))
         except ZeroDivisionError:
             warnings.warn('The val_freq value should not be zero. Set the val_freq to 5.')
             val_freq=5
@@ -193,7 +197,15 @@ def train_sub_module(gpu_id, model_cfg, data_cfg, env_cfg, logger):
 
         if not env_cfg['distributed'] or (env_cfg['distributed'] and (select_gpu or env_cfg['rank']%env_cfg['ngpus_per_node']==0)):
             logger.info('Save checkpoint..{} epoch.'.format(epoch))
-            pass
+            
+            save_checkpoint({
+                'epoch':epoch,
+                'architecture':model_cfg['model'],
+                'model':model.state_dict(),
+                'optimizer':optimizer.state_dict(),
+                'scheduler':optimizer.state_dict(),
+                'best_evaluation':best_evaluation
+            }, is_best,directory=data_cfg['weight_dir'])
 
 def train(data_loader, model, params, optimizer, epoch, device, train_freq=5):
     """The operation for train every epoch call.
@@ -262,6 +274,9 @@ def validate(data_loader, model, params, epoch, device, best_evaluation,distribu
         best_evaluation (dict): The best evaluation results on the validation dataset.
         distributed (bool): The option for distribution.
         world_size (int): The world size..
+
+    Returns:
+        dict[bool]: The option for updated best evaluation list.
     """
     def run_validate(loader):
         with torch.no_grad():
@@ -272,7 +287,7 @@ def validate(data_loader, model, params, epoch, device, best_evaluation,distribu
                 data_time.update(time()-end)
                 
                 images.to(device,non_blocking=True)
-                targets.to(device.non_blocking=True)
+                targets.to(device,non_blocking=True)
 
                 #get validation params and output[losses, evaluations, .., etc.]
                 output = model(images,targets,return_loss=True,**params)
@@ -304,8 +319,15 @@ def validate(data_loader, model, params, epoch, device, best_evaluation,distribu
             run_validate(aux_val_loader)
 
     #best evaluation initialization
+    is_best = dict()
     for k,v in best_evaluation.items():
-        best_evaluation.update({k:max(v,metrics.meters[k].avg)})
+        is_b = metrics.meters[k].avg>v
+        is_best.update({k:is_b})
+        
+        if is_b:
+            best_evaluation.update({k:metrics.meters[k].avg})
 
     #display
     display(epoch,len(data_loader),len(data_loader),metrics, data_time, batch_time)
+
+    return is_best

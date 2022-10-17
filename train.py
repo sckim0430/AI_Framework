@@ -1,8 +1,15 @@
 """The train implementation.
 """
 import os
+import sys
+sys.path.append(os.path.join(os.path.abspath(os.path.dirname(__file__)),'tools'))
+sys.path.append(os.path.join(os.path.abspath(os.path.dirname(__file__)),'utils'))
+sys.path.append(os.path.join(os.path.abspath(os.path.dirname(__file__)),'models'))
+sys.path.append(os.path.join(os.path.abspath(os.path.dirname(__file__)),'builds'))
+
 import json
 import argparse
+
 
 from utils.log import get_logger
 from utils.check import check_cfg
@@ -22,11 +29,11 @@ def parse_args():
 
     parser = argparse.ArgumentParser(description='Pytorch Imagenet Train')
     parser.add_argument(
-        '--model_config_dir', default='/home/sckim/AI_Framework/configs/classification/alexnet/alexnet.json', help='model config path')
+        '--model_config_dir', default='/home/sckim/Benchmark/configs/classification/alexnet/alexnet.json', help='model config path')
     parser.add_argument(
-        '--data_config_dir', default='/home/sckim/AI_Framework/configs/classification/data_config.json', help='data config path')
+        '--data_config_dir', default='/home/sckim/Benchmark/configs/classification/data_config.json', help='data config path')
     parser.add_argument(
-        '--env_config_dir', default='/home/sckim/AI_Framework/configs/env_config.json', help='environment config path')
+        '--env_config_dir', default='/home/sckim/Benchmark/configs/env_config.json', help='environment config path')
     args = parser.parse_args()
 
     return args
@@ -38,15 +45,15 @@ def main():
     #load config
     args = parse_args()
 
-    with open(args.model_config, 'r') as f:
+    with open(args.model_config_dir, 'r') as f:
         model_cfg = json.load(f)
         f.close()
 
-    with open(args.train_config, 'r') as f:
+    with open(args.data_config_dir, 'r') as f:
         data_cfg = json.load(f)
         f.close()
 
-    with open(args.env_config, 'r') as f:
+    with open(args.env_config_dir, 'r') as f:
         env_cfg = json.load(f)
         f.close()
 

@@ -1,7 +1,6 @@
 """The parse utils implementation.
 """
 
-
 def parse_type(cfg):
     """The operation for parse the type keyword from config.
 

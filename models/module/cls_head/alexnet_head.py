@@ -1,7 +1,7 @@
 """The alexnet head Implementation.
 """
 import torch.nn as nn
-from base_head import Base_Head
+from .base_head import Base_Head
 
 
 class AlexNet_Head(Base_Head):

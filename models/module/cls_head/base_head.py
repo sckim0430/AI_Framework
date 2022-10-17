@@ -5,7 +5,7 @@ from sklearn.metrics import *
 import torch
 import torch.nn as nn
 
-from builds.build import build
+from build import build
 from utils.convert import cvt2sps
 from utils.check import check_cls_label
 

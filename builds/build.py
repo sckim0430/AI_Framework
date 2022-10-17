@@ -40,7 +40,7 @@ def build_model(cfg, logger=None):
 
     #build sub modules
     for k in params:
-        params.update({k: build(params[k], logger)})
+        params.update({k: build_sub(params[k], logger)})
 
     params.update({'logger': logger})
 
@@ -78,7 +78,7 @@ def build_param(cfg, mode='train'):
     Returns:
         dict: The output config.
     """
-   if mode not in cfg['evaluation']:
+    if mode not in cfg['evaluation']:
         raise ValueError("The '{}' should be in config file.".format(mode))
 
     cfg_param = cfg.copy()

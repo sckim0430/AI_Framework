@@ -1,7 +1,7 @@
 """The AlexNet class implementation.
 """
 import torch.nn as nn
-from base_classification import BaseClassification
+from .base_classification import BaseClassification
 
 
 class AlexNet(BaseClassification):

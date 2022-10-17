@@ -70,7 +70,7 @@ class AverageMeter(object):
         if self.name is None:
             str_out = '{:.5f}'
             str_out.format(avg)
-        else
+        else:
             str_out = '{}_{} {:.5f}'
             str_out.format(self.prefix, self.name, avg)
         
