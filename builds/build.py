@@ -19,13 +19,14 @@ def build(cfg, logger=None):
     Returns:
         nn.Module: The sub model object.
     """
-    #parse type from config
+    # parse type from config
     type, params = parse_type(cfg)
-    
+
     if logger is not None:
         params.update({'logger': logger})
 
     return eval(type)(**params if params is not None else {})
+
 
 def build_model(cfg, logger=None):
     """The operation for build model.
@@ -36,16 +37,17 @@ def build_model(cfg, logger=None):
     Returns:
         nn.Module: The model object.
     """
-    #parse model config
+    # parse model config
     type, params = parse_type(cfg)
 
-    #build sub modules
+    # build sub modules
     for k in params:
         params.update({k: build(params[k], logger)})
 
     params.update({'logger': logger})
-    
+
     return eval(type)(**params if params is not None else {})
+
 
 def build_optimizer(model_parameters, cfg):
     """The operation for build optimizer.
@@ -57,12 +59,13 @@ def build_optimizer(model_parameters, cfg):
     Returns:
         torch.optim: The optimizer object.
     """
-    #parse optimizer config
+    # parse optimizer config
     type, params = parse_type(cfg)
     params.update({'params': model_parameters})
 
-    #build optimizer
+    # build optimizer
     return eval(type)(**params if params is not None else {})
+
 
 def build_param(cfg, mode='train'):
     """The operation for build parameter.
@@ -85,6 +88,7 @@ def build_param(cfg, mode='train'):
 
     return cfg_param
 
+
 def build_pipeline(cfg, mode='train'):
     """The operation for build pipeline.
 
@@ -99,15 +103,17 @@ def build_pipeline(cfg, mode='train'):
         torchvision.transforms.Compose: The pipeline.
     """
     if mode not in cfg:
-            raise ValueError("The '{}' should be in config file.".format(mode))
+        raise ValueError("The '{}' should be in config file.".format(mode))
 
     tf_list = []
     for k in cfg[mode]:
-        tf_list.append(eval(k)(**cfg[mode][k] if cfg[mode][k] is not None else {}))
+        tf_list.append(
+            eval(k)(**cfg[mode][k] if cfg[mode][k] is not None else {}))
 
     return Compose(tf_list)
 
-def build_dataset(dataset='ImageNet',**kwargs):
+
+def build_dataset(dataset='ImageNet', **kwargs):
     """The operation for build dataset.
 
     Args:

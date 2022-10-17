@@ -21,7 +21,7 @@ class BaseClassification(nn.Module, metaclass=ABCMeta):
             cls_head (torch.nn.Module, optional): The classification head. Defaults to None.
             logger (logging.RootLogger): The logger. Defaults to None.
         """
-        super(BaseClassification,self).__init__()
+        super(BaseClassification, self).__init__()
 
         self.backbone = backbone
         self.neck = neck

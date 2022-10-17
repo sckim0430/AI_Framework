@@ -1,5 +1,6 @@
 """The base head Implementation.
 """
+import warnings
 from abc import ABCMeta, abstractmethod
 from sklearn.metrics import *
 import torch
@@ -32,7 +33,7 @@ class Base_Head(nn.Module, metaclass=ABCMeta):
         Raises:
             ValueError: The number of class should more than 2.
         """
-        super(Base_Head,self).__init__()
+        super(Base_Head, self).__init__()
         if isinstance(in_size, int):
             self.in_height = self.in_width = in_size
         elif isinstance(in_size, list):
@@ -47,7 +48,7 @@ class Base_Head(nn.Module, metaclass=ABCMeta):
 
         self.in_channel = in_channel
 
-        if num_class<2:
+        if num_class < 2:
             raise ValueError('The number of class must more than 2.')
         self.num_class = num_class
 
@@ -84,7 +85,7 @@ class Base_Head(nn.Module, metaclass=ABCMeta):
 
         N : num of class(>=2), B : batch size, R : random
         """
-        check_cls_label(cls_scores, labels, self.num_calss, self.multi_label)
+        check_cls_label(cls_scores, labels, self.num_class, self.multi_label)
 
         losses = dict()
 
@@ -109,8 +110,16 @@ class Base_Head(nn.Module, metaclass=ABCMeta):
                 cls_scores_np = cvt2sps(cls_scores_np)
 
             for func_name in kwargs['evaluation']:
-                losses.update({func_name: torch.tensor(eval(func_name)(
-                    labels_np, cls_scores_np, **kwargs['evaluation'][func_name] if kwargs['evaluation'][func_name] is not None else {}), device=cls_scores.device)})
+                if 'top_k' in func_name:
+                    if self.multi_label or self.num_class == 2:
+                        # In the case of multi class classification, you cant not use top_k evaluations.
+                        continue
+                    else:
+                        losses.update({func_name: torch.tensor(eval(func_name)(
+                            labels_np, cls_scores.detach().cpu().numpy(), **kwargs['evaluation'][func_name] if kwargs['evaluation'][func_name] is not None else {}), device=cls_scores.device)})
+                else:
+                    losses.update({func_name: torch.tensor(eval(func_name)(
+                        labels_np, cls_scores_np, **kwargs['evaluation'][func_name] if kwargs['evaluation'][func_name] is not None else {}), device=cls_scores.device)})
 
         return losses
 

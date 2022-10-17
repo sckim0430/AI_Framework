@@ -16,7 +16,7 @@ def parse_args():
 
     Returns:
         argparse.Namespace : The arguments.
-    
+
     Notice:
         We only use json format config file.
     """
@@ -36,7 +36,7 @@ def parse_args():
 def main():
     """The operation for main.
     """
-    #load config
+    # load config
     args = parse_args()
 
     with open(args.model_config_dir, 'r') as f:
@@ -51,7 +51,7 @@ def main():
         env_cfg = json.load(f)
         f.close()
 
-    #build log
+    # build log
     if not os.path.isdir(data_cfg['log_dir']):
         os.mkdir(data_cfg['log_dir'])
 
@@ -61,22 +61,23 @@ def main():
         os.mkdir(log_dir)
 
     log_dir = os.path.join(log_dir, 'train.log')
-    logger = get_logger(log_level=1,stream_level=1,file_level=2,log_dir=log_dir)
+    logger = get_logger(log_level=1, stream_level=1,
+                        file_level=2, log_dir=log_dir)
 
-    #check configuration
+    # check configuration
     logger.info('Check the configuaration files.')
     check_cfg(model_cfg, data_cfg, env_cfg, mode=True)
 
-    #set random option from seed
+    # set random option from seed
     if env_cfg['seed'] is not None:
         logger.info('Set the deterministic options from seed.')
         set_deterministic_option(env_cfg['seed'])
 
-    #set world size
+    # set world size
     logger.info('Set the world size.')
     set_world_size(env_cfg)
 
-    #train
+    # train
     train_module(model_cfg, data_cfg, env_cfg, logger)
 
 

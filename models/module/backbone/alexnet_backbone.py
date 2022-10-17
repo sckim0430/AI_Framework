@@ -25,17 +25,17 @@ class AlexNet_Backbone(nn.Module):
             logger (logging.RootLogger): The logger. Defaults to None.
         """
         super(AlexNet_Backbone, self).__init__()
-        #Setting Param
+        # Setting Param
         self.in_channel = in_channel
         self.lrn_param = lrn_param
         self.pretrained = pretrained
         self.logger = logger
 
         self.conv1 = nn.Conv2d(self.in_channel, 96, 11, 4)
-        self.conv2 = nn.Conv2d(96, 256, 5, 2)
-        self.conv3 = nn.Conv2d(256, 384, 3, 1)
-        self.conv4 = nn.Conv2d(384, 384, 3, 1)
-        self.conv5 = nn.Conv2d(384, 256, 3, 1)
+        self.conv2 = nn.Conv2d(96, 256, 5, 1, 2)
+        self.conv3 = nn.Conv2d(256, 384, 3, 1, 1)
+        self.conv4 = nn.Conv2d(384, 384, 3, 1, 1)
+        self.conv5 = nn.Conv2d(384, 256, 3, 1, 1)
 
         self.relu = nn.ReLU(inplace=True)
         self.lrn = nn.LocalResponseNorm(*lrn_param)
@@ -79,7 +79,7 @@ class AlexNet_Backbone(nn.Module):
 
     def init_weights(self):
         """The operation for initalization weights.
-        
+
         Raises:
             TypeError : If pretrained type not in (None, str).
         """
