@@ -21,10 +21,11 @@ def build(cfg, logger=None):
     """
     #parse type from config
     type, params = parse_type(cfg)
-    params.update({'logger': logger})
+    
+    if logger is not None:
+        params.update({'logger': logger})
 
-    return eval(type)(**params)
-
+    return eval(type)(**params if params is not None else {})
 
 def build_model(cfg, logger=None):
     """The operation for build model.
@@ -40,12 +41,11 @@ def build_model(cfg, logger=None):
 
     #build sub modules
     for k in params:
-        params.update({k: build_sub(params[k], logger)})
+        params.update({k: build(params[k], logger)})
 
     params.update({'logger': logger})
-
-    return eval(type)(**params)
-
+    
+    return eval(type)(**params if params is not None else {})
 
 def build_optimizer(model_parameters, cfg):
     """The operation for build optimizer.
@@ -62,8 +62,7 @@ def build_optimizer(model_parameters, cfg):
     params.update({'params': model_parameters})
 
     #build optimizer
-    return eval(type)(**params)
-
+    return eval(type)(**params if params is not None else {})
 
 def build_param(cfg, mode='train'):
     """The operation for build parameter.
@@ -103,9 +102,8 @@ def build_pipeline(cfg, mode='train'):
             raise ValueError("The '{}' should be in config file.".format(mode))
 
     tf_list = []
-
     for k in cfg[mode]:
-        tf_list.append(eval(k)(**cfg[mode][k]))
+        tf_list.append(eval(k)(**cfg[mode][k] if cfg[mode][k] is not None else {}))
 
     return Compose(tf_list)
 
@@ -118,4 +116,4 @@ def build_dataset(dataset='ImageNet',**kwargs):
     Returns:
         torchvision.datasets: The dataset.
     """
-    return eval(dataset)(**kwargs)
+    return eval(dataset)(**kwargs if kwargs is not None else {})

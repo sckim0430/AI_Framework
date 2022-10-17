@@ -147,14 +147,14 @@ def train_sub_module(gpu_id, model_cfg, data_cfg, env_cfg, logger):
             data_cfg['dataset'], root=data_cfg['val_dir'], transforms=val_pipeline, split='val')
 
     #generate the sampler
+    train_sampler = None
+    val_sampler = None
+
     if env_cfg['distributed']:
         logger.info('Set the train/validation sampler.')
         train_sampler = DistributedSampler(train_dataset)
         val_sampler = DistributedSampler(
             val_dataset, shuffle=False, drop_last=True)
-    else:
-        train_sampler = None
-        val_sample = None
 
     #load the dataset loader
     logger.info('Set the train/validation data loader.')

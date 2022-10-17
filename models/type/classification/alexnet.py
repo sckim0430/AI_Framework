@@ -16,7 +16,7 @@ class AlexNet(BaseClassification):
             cls_head (torch.nn.Module, optional): The classification head. Defaults to None.
             logger (logging.RootLogger): The logger. Defaults to None.
         """
-        super.__init__(backbone, cls_head, logger)
+        super(AlexNet,self).__init__(backbone, cls_head, logger)
 
     def _forward_train(self, imgs, labels, **kwargs):
         """The train method.

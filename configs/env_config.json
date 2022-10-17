@@ -7,6 +7,6 @@
     "ngpus_per_node": -1,
     "world_size": -1,
     "rank": -1,
-    "dist_url": "",
+    "dist_url": "tcp://",
     "dist_backend": "nccl"
 }

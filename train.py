@@ -1,12 +1,6 @@
 """The train implementation.
 """
 import os
-import sys
-sys.path.append(os.path.join(os.path.abspath(os.path.dirname(__file__)),'tools'))
-sys.path.append(os.path.join(os.path.abspath(os.path.dirname(__file__)),'utils'))
-sys.path.append(os.path.join(os.path.abspath(os.path.dirname(__file__)),'models'))
-sys.path.append(os.path.join(os.path.abspath(os.path.dirname(__file__)),'builds'))
-
 import json
 import argparse
 
@@ -58,6 +52,9 @@ def main():
         f.close()
 
     #build log
+    if not os.path.isdir(data_cfg['log_dir']):
+        os.mkdir(data_cfg['log_dir'])
+
     log_dir = os.path.join(data_cfg['log_dir'], model_cfg['model']['type'])
 
     if not os.path.isdir(log_dir):

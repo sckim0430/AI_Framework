@@ -25,7 +25,6 @@ class AlexNet_Backbone(nn.Module):
             logger (logging.RootLogger): The logger. Defaults to None.
         """
         super(AlexNet_Backbone, self).__init__()
-
         #Setting Param
         self.in_channel = in_channel
         self.lrn_param = lrn_param

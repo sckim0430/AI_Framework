@@ -5,7 +5,6 @@ from sklearn.metrics import *
 import torch
 import torch.nn as nn
 
-from build import build
 from utils.convert import cvt2sps
 from utils.check import check_cls_label
 
@@ -18,12 +17,12 @@ class Base_Head(nn.Module, metaclass=ABCMeta):
         metaclass (ABCMeta, optional): The abstract class. Defaults to ABCMeta.
     """
 
-    def __init__(self, in_size, in_channels, num_class, loss_cls=dict(type='CrossEntropyLoss', loss_weight=1.0), avg_pooling=True, multi_label=False, logger=None):
+    def __init__(self, in_size, in_channel, num_class, loss_cls=dict(type='CrossEntropyLoss', loss_weight=1.0), avg_pooling=True, multi_label=False, logger=None):
         """The initalization.
 
         Args:
             in_size (int|list[int], optional): The input size.
-            in_channels (int): The input channels.
+            in_channel (int): The input channels.
             num_class (int): The number of class.
             loss_cls (dict, optional): The classification loss parameter. Defaults to dict(type='CrossEntropyLoss', loss_weight=1.0).
             avg_pooling (bool, optional): The average pooling option for input featrue. Defaults to True.
@@ -33,8 +32,9 @@ class Base_Head(nn.Module, metaclass=ABCMeta):
         Raises:
             ValueError: The number of class should more than 2.
         """
+        super(Base_Head,self).__init__()
         if isinstance(in_size, int):
-            self.in_height = self.in_widht = in_size
+            self.in_height = self.in_width = in_size
         elif isinstance(in_size, list):
             if len(in_size) == 2:
                 self.in_height = in_size[0]
@@ -45,12 +45,13 @@ class Base_Head(nn.Module, metaclass=ABCMeta):
         else:
             raise TypeError('Only in_size support int and list[int] type.')
 
-        self.in_channels = in_channels
+        self.in_channel = in_channel
 
         if num_class<2:
             raise ValueError('The number of class must more than 2.')
         self.num_class = num_class
 
+        from builds.build import build
         self.loss_cls = build(loss_cls)
 
         self.avg_pooling = None
@@ -88,7 +89,7 @@ class Base_Head(nn.Module, metaclass=ABCMeta):
         losses = dict()
 
         loss_cls = self.loss_cls(
-            cls_scores, labels, **kwargs['loss']['loss_cls'] if 'loss_cls' in kwargs['loss'] else None)
+            cls_scores, labels, **kwargs['loss']['loss_cls'] if 'loss_cls' in kwargs['loss'] and kwargs['loss']['loss_cls'] is not None else {})
 
         if isinstance(loss_cls, dict):
             losses.update(loss_cls)
@@ -109,7 +110,7 @@ class Base_Head(nn.Module, metaclass=ABCMeta):
 
             for func_name in kwargs['evaluation']:
                 losses.update({func_name: torch.tensor(eval(func_name)(
-                    labels_np, cls_scores_np, **kwargs['evaluation'][func_name]), device=cls_scores.device)})
+                    labels_np, cls_scores_np, **kwargs['evaluation'][func_name] if kwargs['evaluation'][func_name] is not None else {}), device=cls_scores.device)})
 
         return losses
 

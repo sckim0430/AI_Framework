@@ -19,7 +19,7 @@ class BaseWeightedLoss(nn.Module, metaclass=ABCMeta):
         Args:
             loss_weight (float, optional): The loss weight. Defaults to 1.0.
         """
-        super().__init__()
+        super(BaseWeightedLoss,self).__init__()
         self.loss_weight = loss_weight
 
     @abstractmethod

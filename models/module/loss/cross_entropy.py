@@ -18,7 +18,7 @@ class CrossEntropyLoss(BaseWeightedLoss):
         Args:
             loss_weight (float, optional): The loss weight. Defaults to 1.0.
         """
-        super().__init__(loss_weight=loss_weight)
+        super(CrossEntropyLoss,self).__init__(loss_weight=loss_weight)
 
     def _forward(self, cls_scores, labels, **kwargs):
         """The operation for every call.

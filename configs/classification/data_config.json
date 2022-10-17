@@ -5,12 +5,12 @@
     "weight_dir": "/home/sckim/weight/",
     "weight_load": "/home/sckim/weight/load.pth",
     "log_dir": "/home/sckim/log/",
-    "dummy": false,
+    "dummy": true,
     "batch_size" : 64,
     "epochs": 100,
     "train_freq":5,
     "val_freq":5,
-    "start_epoch": null,
+    "start_epoch": 0,
     "resume": null,
     "dataset":"ImageNet"
 }
