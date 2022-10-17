@@ -9,7 +9,7 @@ import torch.nn as nn
 import torch.distributed as dist
 import torch.multiprocessing as mp
 from torch.optim.lr_scheduler import StepLR
-from torch.utils.data import DataLoader
+from torch.utils.data import DataLoader, Subset
 from torch.utils.data.distributed import DistributedSampler
 import torchvision.transforms as transforms
 import torchvision.datasets as datasets
@@ -56,19 +56,19 @@ def train_sub_module(gpu_id, model_cfg, data_cfg, env_cfg, logger):
     device = set_device(env_cfg['gpu_id'])
 
     #distribution option
-    if env_cfg['distributed']:
+    if is_cuda and env_cfg['distributed']:
         logger.info('Set the rank.')
         set_rank(env_cfg)
 
         logger.info('Initalize the distributed process group.')
-        init_process_group(env_cfg)
+        init_process_group(env_cfg['dist_url'],env_cfg['dist_backend'],env_cfg['world_size'],env_cfg['rank'])
 
-        if is_cuda and select_gpu:
+        if select_gpu:
             batch_size = int(data_cfg['batch_size']/env_cfg['ngpus_per_node'])
             workers = int(
                 (env_cfg['workers']+env_cfg['ngpus_per_node']-1)/env_cfg['ngpus_per_node'])
 
-            logger.info('Convert the batch size {} -> {} and workers {} -> {} by multi processing.'.format(
+            logger.info('Convert the batch size {} -> {} and workers {} -> {} by single gpu and multi processing.'.format(
                 data_cfg['batch_size'], batch_size, env_cfg['workers'], workers))
             data_cfg.update({'batch_size': batch_size})
             env_cfg.update({'workers': workers})
@@ -79,7 +79,7 @@ def train_sub_module(gpu_id, model_cfg, data_cfg, env_cfg, logger):
 
     #set model
     logger.info('Set the model.')
-    model = set_model(model, device, select_gpu=select_gpu,
+    model = set_model(model, device, select_gpu,
                       distributed=env_cfg['distributed'])
 
     #build optimizer & scheduler
@@ -162,26 +162,41 @@ def train_sub_module(gpu_id, model_cfg, data_cfg, env_cfg, logger):
                             shuffle=False, num_workers=env_cfg['workers'], pin_memory=True, sampler=val_sampler)
 
     #get train/validation params
-    train_freq = data_cfg['train_freq'] if 'train_freq' in data_cfg else 5
-    val_freq = data_cfg['val_freq'] if 'val_freq' in data_cfg else 5
+    train_freq = data_cfg['train_freq'] if 'train_freq' in data_cfg else None
+    val_freq = data_cfg['val_freq'] if 'val_freq' in data_cfg else None
+
+    validate_mode = val_freq is not None
 
     train_params = build_param(model_cfg['params'],mode='train')
-    val_params = build_param(model_cfg['params'],mode='validation')
+
+    if validate_mode:
+        val_params = build_param(model_cfg['params'],mode='validation')
 
     logger.info('Train start.')
     for epoch in range(data_cfg['start_epoch'], data_cfg['epochs']):
         if env_cfg['distributed']:
             train_sampler.set_epoch(epoch)
 
-        train(train_loader, model, train_params, optimizer, epoch, device, train_freq)
+        if train_freq is None:
+            train(train_loader, model, train_params, optimizer, epoch, device)
+        else:
+            train(train_loader, model, train_params, optimizer, epoch, device, train_freq)
 
-        if epoch%val_freq==0:
-            validate(val_loader, model, val_params, epoch, device, best_evaluation,distributed=env_cfg['distributed'])
+        try:
+            if validate_mode and epoch%val_freq==0:
+                validate(val_loader, model, val_params, epoch, device, best_evaluation,env_cfg['distributed'],env_cfg['world_size'])
+        except ZeroDivisionError:
+            warnings.warn('The val_freq value should not be zero. Set the val_freq to 5.')
+            val_freq=5
 
         scheduler.step()
 
-def train(data_loader, model, params, optimizer, epoch, device,train_freq):
-    """The operation for every epoch call.
+        if not env_cfg['distributed'] or (env_cfg['distributed'] and (select_gpu or env_cfg['rank']%env_cfg['ngpus_per_node']==0)):
+            logger.info('Save checkpoint..{} epoch.'.format(epoch))
+            pass
+
+def train(data_loader, model, params, optimizer, epoch, device, train_freq=5):
+    """The operation for train every epoch call.
 
     Args:
         data_loader (torch.utils.data.DataLoader): The train data loader.
@@ -190,7 +205,7 @@ def train(data_loader, model, params, optimizer, epoch, device,train_freq):
         optimizer (Optimizer): The optimizer.
         epoch (int): The epoch.
         device (torch.device): The device.
-        train_freq (int): The train frequent.
+        train_freq (int): The train frequent. Defaults to 5.
     """
     mode = 'train'
     data_time = AverageMeter('data load time',prefix=mode)
@@ -226,15 +241,33 @@ def train(data_loader, model, params, optimizer, epoch, device,train_freq):
         batch_time.update(time()-end)
         end = time()
 
-        if i%train_freq==0:
-            display(epoch, len(data_loader), i+1, metrics, data_time, batch_time)
+        try:
+            #display
+            if i%train_freq==0:
+                display(epoch, len(data_loader), i+1, metrics, data_time, batch_time)
+        except ZeroDivisionError:
+            warnings.warn('The train_freq value should not be zero. Set the train_freq to 5.')
+            train_freq=5
 
-def validate(data_loader, model, params, epoch, device, best_evaluation,distributed=False):
-    def run_validate(loader,start=0):
+
+def validate(data_loader, model, params, epoch, device, best_evaluation,distributed,world_size):
+    """The operation for validation every epoch call.
+
+    Args:
+        data_loader (torch.utils.data.DataLoader): The validation data loader.
+        model (nn.Module): The model.
+        params (dict): The validation parameters.
+        epoch (int): The epoch.
+        device (torch.device): The torch device.
+        best_evaluation (dict): The best evaluation results on the validation dataset.
+        distributed (bool): The option for distribution.
+        world_size (int): The world size..
+    """
+    def run_validate(loader):
         with torch.no_grad():
             end = time()
 
-            for i, (images, targets) in enumerate(loader):
+            for (images, targets) in loader:
                 #data load time update
                 data_time.update(time()-end)
                 
@@ -257,12 +290,22 @@ def validate(data_loader, model, params, epoch, device, best_evaluation,distribu
     metrics = MetricMeter(prefix=mode)
 
     model.eval()
-    run_validate(data_loader,start=0)
+    run_validate(data_loader)
 
     if distributed:
         data_time.all_reduce(device=device)
         batch_time.all_reduce(device=device)
         metrics.all_reduce(device=device)
 
-    #aux validation set 처리
-    # display(epoch,len(data_loader),len(data_loader),metrics, data_time, batch_time)
+        #aux validation set processing
+        if len(data_loader.sampler)*world_size<len(data_loader.dataset):
+            aux_val_dataset = Subset(data_loader.dataset,range(len(data_loader.sampler)*world_size,len(data_loader.dataset)))
+            aux_val_loader = DataLoader(aux_val_dataset,batch_size=data_loader.batch_size/world_size,shuffle=False,num_workers=int((data_loader.workers+world_size-1)/world_size),pin_memory=True)
+            run_validate(aux_val_loader)
+
+    #best evaluation initialization
+    for k,v in best_evaluation.items():
+        best_evaluation.update({k:max(v,metrics.meters[k].avg)})
+
+    #display
+    display(epoch,len(data_loader),len(data_loader),metrics, data_time, batch_time)

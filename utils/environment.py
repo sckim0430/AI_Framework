@@ -95,14 +95,14 @@ def set_rank(env_cfg):
             {'rank': env_cfg['rank']*env_cfg['ngpus_per_node']+env_cfg['gpu_id']})
 
 
-def init_process_group(env_cfg):
+def init_process_group(dist_url,dist_backend,world_size,rank):
     """The operation for initalize process group.
 
     Args:
         env_cfg (dict): The environment config.
     """
-    dist.init_process_group(init_method=env_cfg['dist_url'], backend=env_cfg['dist_backend'],
-                            world_size=env_cfg['world_size'], rank=env_cfg['rank'])
+    dist.init_process_group(init_method=dist_url, backend=dist_backend,
+                            world_size=world_size, rank=rank)
 
 
 def set_device(gpu_id=None):
@@ -130,13 +130,13 @@ def set_device(gpu_id=None):
     return device
 
 
-def set_model(model, device, select_gpu=False, distributed=False):
+def set_model(model, device, select_gpu, distributed=False):
     """The operation for set model's distribution mode.
 
     Args:
         model (nn.Module): The model.
         device (torch.device): The torch device.
-        select_gpu (bool, optional): The option for select gpu id. Defaults to False.
+        select_gpu (bool, optional): The option for select gpu id.
         distributed (bool, optional): The option for distributed. Defaults to False.
 
     Raises:
