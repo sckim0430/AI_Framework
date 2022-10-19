@@ -44,7 +44,7 @@ def train_sub_module(gpu_id, model_cfg, data_cfg, env_cfg, logger):
     """The operation for sub train module.
 
     Args:
-        gpu_id (int|None): The gpu id.
+        gpu_id (int|None): The gpu id. This mean local rank in distributed learning.
         model_cfg (dict): The model config.
         data_cfg (dict): The data config.
         env_cfg (dict): The environment config.
