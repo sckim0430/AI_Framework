@@ -31,33 +31,31 @@ def train_module(model_cfg, data_cfg, env_cfg, logger):
         env_cfg (dict): The environment config.
         logger (logging.RootLogger): The logger.
     """
-    #run the train module
+    # run the train module
     if env_cfg['multiprocessing_distributed']:
         mp.sqawn(train_sub_module, nprocs=env_cfg['ngpus_per_node'], args=(
             model_cfg, data_cfg, env_cfg, logger))
     else:
-        train_sub_module(env_cfg['gpu_id'], model_cfg,
-                         data_cfg, env_cfg, logger)
+        train_sub_module(None, model_cfg=model_cfg,
+                         data_cfg=data_cfg, env_cfg=env_cfg, logger=logger)
 
 
 def train_sub_module(gpu_id, model_cfg, data_cfg, env_cfg, logger):
     """The operation for sub train module.
 
     Args:
-        gpu_id (int): The gpu id.
+        gpu_id (int|None): The gpu id.
         model_cfg (dict): The model config.
         data_cfg (dict): The data config.
         env_cfg (dict): The environment config.
         logger (logging.RootLogger): The logger.
     """
-    #set the gpu paramters
+    # set the gpu paramters
     logger.info('Set the gpu parameters.')
-    env_cfg.update({'gpu_id': gpu_id})
-    select_gpu = True if env_cfg['gpu_id'] is not None else False
     is_cuda = torch.cuda.is_available()
-    device = set_device(env_cfg['gpu_id'])
+    device = set_device(gpu_id)
 
-    #distribution option
+    # distribution option
     if is_cuda and env_cfg['distributed']:
         logger.info('Set the rank.')
         set_rank(env_cfg)
@@ -66,37 +64,27 @@ def train_sub_module(gpu_id, model_cfg, data_cfg, env_cfg, logger):
         init_process_group(
             env_cfg['dist_url'], env_cfg['dist_backend'], env_cfg['world_size'], env_cfg['rank'])
 
-        if select_gpu:
-            batch_size = int(data_cfg['batch_size']/env_cfg['ngpus_per_node'])
-            workers = int(
-                (env_cfg['workers']+env_cfg['ngpus_per_node']-1)/env_cfg['ngpus_per_node'])
-
-            logger.info('Convert the batch size {} -> {} and workers {} -> {} by single gpu and multi processing.'.format(
-                data_cfg['batch_size'], batch_size, env_cfg['workers'], workers))
-            data_cfg.update({'batch_size': batch_size})
-            env_cfg.update({'workers': workers})
-
-    #build model
+    # build model
     logger.info('Build the model.')
     model = build_model(model_cfg['model'], logger)
 
-    #set model
+    # set model
     logger.info('Set the model.')
-    model = set_model(model, device, select_gpu,
+    model = set_model(model, device,
                       distributed=env_cfg['distributed'])
 
-    #build optimizer & scheduler
+    # build optimizer & scheduler
     logger.info('Build the optimizer and learning rate scheduler.')
     optimizer = build_optimizer(model.parameters(), model_cfg['optimizer'])
 
-    #learninig rate will decayed by gamma every step_size epochs
+    # learninig rate will decayed by gamma every step_size epochs
     scheduler = StepLR(optimizer, step_size=30, gamma=0.1)
 
-    #initalize the best evaluation scores
+    # initalize the best evaluation scores
     best_evaluation = {k: 0 for k in model_cfg['params']
                        ['evaluation']['validation'].keys()}
 
-    #load the resume model weight
+    # load the resume model weight
     if data_cfg['resume'] is not None:
         if os.path.isfile(data_cfg['resume']):
             logger.info('Load the resume checkpoint : {}'.format(
@@ -105,10 +93,10 @@ def train_sub_module(gpu_id, model_cfg, data_cfg, env_cfg, logger):
             checkpoint = torch.load(data_cfg['resume'], map_location=device)
 
             if model_cfg['model'] == checkpoint['architecture']:
-                #update start epoch
+                # update start epoch
                 data_cfg.upate({'start_epoch': checkpoint['epoch']})
 
-                #update best evaluation scores
+                # update best evaluation scores
                 for k in checkpoint['best_evaluation']:
                     if k in best_evaluation:
                         best_evaluation.update(
@@ -117,7 +105,7 @@ def train_sub_module(gpu_id, model_cfg, data_cfg, env_cfg, logger):
                         warnings.warn(
                             'There is not best evaluation key : {}'.format(k))
 
-                #load model, optimizer, scheduler state dict
+                # load model, optimizer, scheduler state dict
                 model.load_state_dict(checkpoint['model'])
                 optimizer.load_state_dict(checkpoint['optimizer'])
                 scheduler.load_state_dict(checkpoint['scheduler'])
@@ -128,7 +116,7 @@ def train_sub_module(gpu_id, model_cfg, data_cfg, env_cfg, logger):
             logger.warning(
                 'The resume checkpoint have wrong path with {}. The resume checkpoint can not be loaded'.format(data_cfg['resume']))
 
-    #generate the dataset
+    # generate the dataset
     if data_cfg['dummy']:
         logger.info('Generate the dummy data.')
 
@@ -147,7 +135,7 @@ def train_sub_module(gpu_id, model_cfg, data_cfg, env_cfg, logger):
         val_dataset = build_dataset(
             data_cfg['dataset'], root=data_cfg['val_dir'], transforms=val_pipeline, split='val')
 
-    #generate the sampler
+    # generate the sampler
     train_sampler = None
     val_sampler = None
 
@@ -157,14 +145,14 @@ def train_sub_module(gpu_id, model_cfg, data_cfg, env_cfg, logger):
         val_sampler = DistributedSampler(
             val_dataset, shuffle=False, drop_last=True)
 
-    #load the dataset loader
+    # load the dataset loader
     logger.info('Set the train/validation data loader.')
     train_loader = DataLoader(dataset=train_dataset, batch_size=data_cfg['batch_size'], shuffle=(
         train_sampler is None), num_workers=env_cfg['workers'], pin_memory=True, sampler=train_sampler)
     val_loader = DataLoader(dataset=val_dataset, batch_size=data_cfg['batch_size'],
                             shuffle=False, num_workers=env_cfg['workers'], pin_memory=True, sampler=val_sampler)
 
-    #get train/validation params
+    # get train/validation params
     train_freq = data_cfg['train_freq'] if 'train_freq' in data_cfg else None
     val_freq = data_cfg['val_freq'] if 'val_freq' in data_cfg else None
 
@@ -199,7 +187,7 @@ def train_sub_module(gpu_id, model_cfg, data_cfg, env_cfg, logger):
 
         scheduler.step()
 
-        if not env_cfg['distributed'] or (env_cfg['distributed'] and (select_gpu or env_cfg['rank'] % env_cfg['ngpus_per_node'] == 0)):
+        if not env_cfg['distributed'] or (env_cfg['distributed'] and env_cfg['rank'] % env_cfg['ngpus_per_node'] == 0):
             logger.info('Save checkpoint..{} epoch.'.format(epoch))
 
             save_checkpoint({
@@ -231,21 +219,21 @@ def train(data_loader, model, params, optimizer, epoch, device, train_freq=5):
 
     model.train()
     end = time()
-    #train loop
+    # train loop
     for i, (images, targets) in enumerate(data_loader):
-        #data load time update
+        # data load time update
         data_time.update(time()-end)
 
-        images.to(device, non_blocking=True)
-        targets.to(device, non_blocking=True)
+        images = images.to(device, non_blocking=True)
+        targets = targets.to(device, non_blocking=True)
 
-        #get output[losses, evaluations, .., etc.]
+        # get output[losses, evaluations, .., etc.]
         output = model(images, targets, return_loss=True, **params)
 
-        #output update
+        # output update
         metrics.update(output)
 
-        #compute gradient and optimizer step
+        # compute gradient and optimizer step
         optimizer.zero_grad()
 
         for k in output:
@@ -254,12 +242,12 @@ def train(data_loader, model, params, optimizer, epoch, device, train_freq=5):
 
         optimizer.step()
 
-        #elapsed time update
+        # elapsed time update
         batch_time.update(time()-end)
         end = time()
 
         try:
-            #display
+            # display
             if i % train_freq == 0:
                 display(epoch, len(data_loader), i+1,
                         metrics, data_time, batch_time)
@@ -290,19 +278,19 @@ def validate(data_loader, model, params, epoch, device, best_evaluation, distrib
             end = time()
 
             for (images, targets) in loader:
-                #data load time update
+                # data load time update
                 data_time.update(time()-end)
 
-                images.to(device, non_blocking=True)
-                targets.to(device, non_blocking=True)
+                images = images.to(device, non_blocking=True)
+                targets = targets.to(device, non_blocking=True)
 
-                #get validation params and output[losses, evaluations, .., etc.]
+                # get validation params and output[losses, evaluations, .., etc.]
                 output = model(images, targets, return_loss=True, **params)
 
-                #output update
+                # output update
                 metrics.update(output)
 
-                #elapsed time update
+                # elapsed time update
                 batch_time.update(time()-end)
                 end = time()
 
@@ -319,7 +307,7 @@ def validate(data_loader, model, params, epoch, device, best_evaluation, distrib
         batch_time.all_reduce(device=device)
         metrics.all_reduce(device=device)
 
-        #aux validation set processing
+        # aux validation set processing
         if len(data_loader.sampler)*world_size < len(data_loader.dataset):
             aux_val_dataset = Subset(data_loader.dataset, range(
                 len(data_loader.sampler)*world_size, len(data_loader.dataset)))
@@ -327,7 +315,7 @@ def validate(data_loader, model, params, epoch, device, best_evaluation, distrib
                                         shuffle=False, num_workers=int((data_loader.workers+world_size-1)/world_size), pin_memory=True)
             run_validate(aux_val_loader)
 
-    #best evaluation initialization
+    # best evaluation initialization
     is_best = dict()
     for k, v in best_evaluation.items():
         is_b = metrics.meters[k].avg > v
@@ -336,7 +324,7 @@ def validate(data_loader, model, params, epoch, device, best_evaluation, distrib
         if is_b:
             best_evaluation.update({k: metrics.meters[k].avg})
 
-    #display
+    # display
     display(epoch, len(data_loader), len(data_loader),
             metrics, data_time, batch_time)
 

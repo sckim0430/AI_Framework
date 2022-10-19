@@ -30,23 +30,23 @@ def set_deterministic_option(seed):
                   'from checkpoints.')
 
 ##############################################################################################################################
-#GPU CASE
+# GPU CASE
 
-#1. cpu
-#2. single gpu, single node, single process(this, total)
-#3. single gpu, multi node, single process(this) / multi process(total)
-#4. multi gpu, single node, single process(this, total)
-#5. multi gpu, single node, multi process(this, total)
-#6. multi gpu, multi node, multi process(this, total)
-#7. multi gpu, multi node, single process(this) / multi process(total)
+# 1. cpu
+# 2. single gpu, single node, single process(this, total)
+# 3. single gpu, multi node, single process(this) / multi process(total)
+# 4. multi gpu, single node, single process(this, total)
+# 5. multi gpu, single node, multi process(this, total)
+# 6. multi gpu, multi node, multi process(this, total)
+# 7. multi gpu, multi node, single process(this) / multi process(total)
 ##############################################################################################################################
-#dist_url
+# dist_url
 
-#1. as in the case of 2 and 4, distributed training is not performed in a single process, so world_size and rank are ignored.
-#2. if dist_url is specified as env://, it is assumed that world_size, rank, master_port, and master_ip are specified in environment variables.
-#3. if world_size and rank information is not included in dist_url, world_size and rank must be initialized.
-#4. if dist_url includes world_size and rank information, it is not necessary to initialize world_size and rank on environment variable.this is not used now.
-#5. if dist_url is not used, the store option must be used, and world_size and rank must be initialized on environment variable. this is not used now.
+# 1. as in the case of 2 and 4, distributed training is not performed in a single process, so world_size and rank are ignored.
+# 2. if dist_url is specified as env://, it is assumed that world_size, rank, master_port, and master_ip are specified in environment variables.
+# 3. if world_size and rank information is not included in dist_url, world_size and rank must be initialized.
+# 4. if dist_url includes world_size and rank information, it is not necessary to initialize world_size and rank on environment variable.this is not used now.
+# 5. if dist_url is not used, the store option must be used, and world_size and rank must be initialized on environment variable. this is not used now.
 ##############################################################################################################################
 
 
@@ -60,18 +60,18 @@ def set_world_size(env_cfg):
     if env_cfg['dist_url'] == 'env://' and env_cfg['world_size'] == -1:
         env_cfg.update({'world_size': int(os.environ['WORLD_SIZE'])})
 
-    #multiprocessing_distributed is option for multi processing in this node case with 5 and 6.
-    #when world_size>1, then multi node case with 3 and 6 and 7.
-    #distributed is option for multi process(total).
+    # multiprocessing_distributed is option for multi processing in this node case with 5 and 6.
+    # when world_size>1, then multi node case with 3 and 6 and 7.
+    # distributed is option for multi process(total).
     env_cfg.update(
         {'distributed': env_cfg['world_size'] > 1 or env_cfg['multiprocessing_distributed']})
 
-    #ngpus_per_node : gpu number per node
-    #we assign 1 process per gpu.
+    # ngpus_per_node : gpu number per node
+    # we assign 1 process per gpu.
     env_cfg.update({'ngpus_per_node': torch.cuda.device_count()})
 
-    #the world size means node number to process number,
-    #so, in case with 5 and 6, we redefine world size = ngpus_per_node * world size.
+    # the world size means node number to process number,
+    # so, in case with 5 and 6, we redefine world size = ngpus_per_node * world size.
     if env_cfg['multiprocessing_distributed']:
         env_cfg.update(
             {'world_size': env_cfg['ngpus_per_node'] * env_cfg['world_size']})
@@ -83,19 +83,19 @@ def set_rank(env_cfg):
     Args:
         env_cfg (dict): The environment config.
     """
-    #when dist_url == env://, we refer to environment variable.
+    # when dist_url == env://, we refer to environment variable.
     if env_cfg['dist_url'] == 'env://' and env_cfg['rank'] == -1:
         env_cfg.update({'rank': int(os.environ['RANK'])})
 
-    #rank means the priority of the current node among all nodes,
-    #so, in case with 5 and 6, we redefine rank = rank * ngpus_per_node + gpu_id.
-    #finally, it is changed from the priority of the current node to the priority of the process.
+    # rank means the priority of the current node among all nodes,
+    # so, in case with 5 and 6, we redefine rank = rank * ngpus_per_node + gpu_id.
+    # finally, it is changed from the priority of the current node to the priority of the process.
     if env_cfg['multiprocessing_distributed']:
         env_cfg.update(
             {'rank': env_cfg['rank']*env_cfg['ngpus_per_node']+env_cfg['gpu_id']})
 
 
-def init_process_group(dist_url,dist_backend,world_size,rank):
+def init_process_group(dist_url, dist_backend, world_size, rank):
     """The operation for initalize process group.
 
     Args:
@@ -105,21 +105,18 @@ def init_process_group(dist_url,dist_backend,world_size,rank):
                             world_size=world_size, rank=rank)
 
 
-def set_device(gpu_id=None):
+def set_device(local_rank=None):
     """The operation for set torch device.
-
     Args:
-        gpu_id (int, optional): The gpu id. Defaults to None.
-
+        local_rank (int): The local rank. Defaults to None.
     Returns:
         torch.device: The torch device.
     """
     device = None
 
     if torch.cuda.is_available():
-        if gpu_id is not None:
-            device = torch.device('cuda:{}'.foramt(gpu_id))
-            torch.cuda.set_device(device)
+        if local_rank is not None:
+            device = torch.device('cuda:{}'.format(local_rank))
         else:
             device = torch.device('cuda')
     elif torch.backends.mps.is_available():
@@ -130,18 +127,14 @@ def set_device(gpu_id=None):
     return device
 
 
-def set_model(model, device, select_gpu, distributed=False):
+def set_model(model, device, distributed=False):
     """The operation for set model's distribution mode.
-
     Args:
         model (nn.Module): The model.
         device (torch.device): The torch device.
-        select_gpu (bool, optional): The option for select gpu id.
         distributed (bool, optional): The option for distributed. Defaults to False.
-
     Raises:
         ValueError: If distributed gpu option is true, the gpu device should cuda.
-    
     Returns:
         nn.Module: The model.
     """
@@ -151,14 +144,14 @@ def set_model(model, device, select_gpu, distributed=False):
         if is_cuda:
             model.to(device)
             model = nn.parallel.DistributedDataParallel(
-                model, device_ids=[device])
+                model, device_ids=[device], output_device=[device])
         else:
             raise ValueError(
                 'If in cpu or mps mode, distributed option should be False.')
     else:
         model = model.to(device)
 
-        if is_cuda and not select_gpu:
-            model = nn.parallel.DataParallel(model, device_ids=[device])
+        if is_cuda and torch.cuda.device_count() > 1:
+            model = nn.parallel.DataParallel(model)
 
     return model

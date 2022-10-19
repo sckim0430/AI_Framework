@@ -3,10 +3,9 @@
     "workers": 4,
     "multiprocessing_distributed": false,
     "distributed": false,
-    "gpu_id": null,
     "ngpus_per_node": -1,
     "world_size": -1,
     "rank": -1,
-    "dist_url": "tcp://",
+    "dist_url": "tcp://127.0.0.1",
     "dist_backend": "nccl"
 }
