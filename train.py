@@ -23,11 +23,11 @@ def parse_args():
 
     parser = argparse.ArgumentParser(description='Pytorch Imagenet Train')
     parser.add_argument(
-        '--model_config_dir', default='/home/sckim/Benchmark/configs/classification/alexnet/alexnet.json', help='model config path')
+        '--model_config_dir', default='/workspace/Benchmark/configs/classification/alexnet/alexnet.json', help='model config path')
     parser.add_argument(
-        '--data_config_dir', default='/home/sckim/Benchmark/configs/classification/data_config.json', help='data config path')
+        '--data_config_dir', default='/workspace/Benchmark/configs/classification/data_config.json', help='data config path')
     parser.add_argument(
-        '--env_config_dir', default='/home/sckim/Benchmark/configs/env_config.json', help='environment config path')
+        '--env_config_dir', default='/workspace/Benchmark/configs/env_config.json', help='environment config path')
     args = parser.parse_args()
 
     return args
@@ -38,7 +38,6 @@ def main():
     """
     # load config
     args = parse_args()
-
     with open(args.model_config_dir, 'r') as f:
         model_cfg = json.load(f)
         f.close()

@@ -18,7 +18,7 @@ class CrossEntropyLoss(BaseWeightedLoss):
         Args:
             loss_weight (float, optional): The loss weight. Defaults to 1.0.
         """
-        super(CrossEntropyLoss,self).__init__(loss_weight=loss_weight)
+        super(CrossEntropyLoss, self).__init__(loss_weight=loss_weight)
 
     def _forward(self, cls_scores, labels, **kwargs):
         """The operation for every call.
@@ -34,6 +34,6 @@ class CrossEntropyLoss(BaseWeightedLoss):
             kwargs.update(dict(weight=torch.tensor(
                 kwargs['weight'], device=cls_scores.device)))
 
-        loss_cls = F.cross_entropy(cls_scores, labels, **kwargs)
+        loss_cls = F.CrossEntropyLoss(cls_scores, labels, **kwargs)
 
         return loss_cls
