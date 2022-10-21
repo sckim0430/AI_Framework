@@ -21,6 +21,8 @@ from utils.display import display
 from utils.AverageMeter import AverageMeter, MetricMeter
 from utils.checkpoint import save_checkpoint
 
+warnings.filterwarnings(action='ignore')
+
 
 def train_module(model_cfg, data_cfg, env_cfg, logger):
     """The operation for train module.
@@ -213,8 +215,8 @@ def train(data_loader, model, params, optimizer, epoch, device, train_freq=5):
         train_freq (int): The train frequent. Defaults to 5.
     """
     mode = 'train'
-    data_time = AverageMeter('data load time', prefix=mode)
-    batch_time = AverageMeter('batch inference time', prefix=mode)
+    data_time = AverageMeter('load_time', prefix=mode)
+    batch_time = AverageMeter('infer_time', prefix=mode)
     metrics = MetricMeter(prefix=mode)
 
     model.train()
@@ -230,17 +232,19 @@ def train(data_loader, model, params, optimizer, epoch, device, train_freq=5):
         # get output[losses, evaluations, .., etc.]
         output = model(images, targets, return_loss=True, **params)
 
-        # output update
-        metrics.update(output)
-
         # compute gradient and optimizer step
         optimizer.zero_grad()
 
         for k in output:
+            output.update({k: torch.mean(output[k])})
+
             if 'loss' in k:
                 output[k].backward()
 
         optimizer.step()
+
+        # output update
+        metrics.update(output)
 
         # elapsed time update
         batch_time.update(time()-end)
@@ -287,6 +291,8 @@ def validate(data_loader, model, params, epoch, device, best_evaluation, distrib
                 # get validation params and output[losses, evaluations, .., etc.]
                 output = model(images, targets, return_loss=True, **params)
 
+                print(output)
+
                 # output update
                 metrics.update(output)
 
@@ -294,9 +300,9 @@ def validate(data_loader, model, params, epoch, device, best_evaluation, distrib
                 batch_time.update(time()-end)
                 end = time()
 
-    mode = 'validation'
-    data_time = AverageMeter('data load time', prefix=mode)
-    batch_time = AverageMeter('batch inference time', prefix=mode)
+    mode = 'val'
+    data_time = AverageMeter('load_time', prefix=mode)
+    batch_time = AverageMeter('infer_time', prefix=mode)
     metrics = MetricMeter(prefix=mode)
 
     model.eval()

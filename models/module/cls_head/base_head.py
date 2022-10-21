@@ -1,8 +1,9 @@
 """The base head Implementation.
 """
-import warnings
 from abc import ABCMeta, abstractmethod
 from sklearn.metrics import *
+import numpy as np
+
 import torch
 import torch.nn as nn
 
@@ -110,26 +111,44 @@ class Base_Head(nn.Module, metaclass=ABCMeta):
                 cls_scores_np = cvt2sps(cls_scores_np)
 
             for func_name in kwargs['evaluation']:
-                if 'top_k' in func_name:
+                if kwargs['evaluation'][func_name] is None:
+                    kwargs['evaluation'][func_name] = {}
+
+                if func_name in ["top_k_accuracy_score"]:
                     if self.multi_label or self.num_class == 2:
                         # In the case of multi class classification, you cant not use top_k evaluations.
                         continue
                     else:
-                        losses.update({func_name: torch.tensor(eval(func_name)(
-                            labels_np, cls_scores.detach().cpu().numpy(), **kwargs['evaluation'][func_name] if kwargs['evaluation'][func_name] is not None else {}), device=cls_scores.device)})
-                else:
-                    losses.update({func_name: torch.tensor(eval(func_name)(
-                        labels_np, cls_scores_np, **kwargs['evaluation'][func_name] if kwargs['evaluation'][func_name] is not None else {}), device=cls_scores.device)})
+                        kwargs['evaluation'][func_name].update(
+                            {'labels': np.arange(self.num_class)})
+
+                        losses.update({func_name: torch.tensor(eval(func_name)(labels_np, cls_scores.detach().cpu().numpy(
+                        ), **kwargs['evaluation'][func_name] if kwargs['evaluation'][func_name] is not None else {}), device=cls_scores.device)})
+                        continue
+
+                if func_name in ["precision_score", "recall_score"]:
+                    kwargs['evaluation'][func_name].update(
+                        {'zero_division': 1})
+
+                    if self.num_class == 2:
+                        kwargs['evaluation'][func_name].update(
+                            {'average': 'binary'})
+                    else:
+                        kwargs['evaluation'][func_name].update(
+                            {'average': 'weighted'})
+
+                losses.update({func_name: torch.tensor(eval(func_name)(
+                    labels_np, cls_scores_np, **kwargs['evaluation'][func_name] if kwargs['evaluation'][func_name] is not None else {}), device=cls_scores.device)})
 
         return losses
 
-    @abstractmethod
+    @ abstractmethod
     def init_weights(self):
         """The weight initalization.
         """
         pass
 
-    @abstractmethod
+    @ abstractmethod
     def forward(self, x):
         """The operation for every call.
 

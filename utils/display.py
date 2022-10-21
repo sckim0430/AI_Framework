@@ -1,5 +1,7 @@
 """The print result implementation.
 """
+
+
 def display(epoch, data_len, idx, metrics, data_time, batch_time):
     """The operation of print result.
 
@@ -12,8 +14,9 @@ def display(epoch, data_len, idx, metrics, data_time, batch_time):
         batch_time (AverageMeter): The batch train time.
     """
     entries = []
-    entries += ['Epoch [{0:03d}] {}/{}:'.format(epoch,idx,data_len)]
+    entries += ['Epoch [{0:03d}]'.format(epoch)]
+    entries += ['{:05d}/{:05d}'.format(idx, data_len)]
     entries += [metrics.__str__()]
     entries += [data_time.__str__()]
     entries += [batch_time.__str__()]
-    print('\t'.join(entries))
+    print('  '.join(entries))

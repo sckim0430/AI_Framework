@@ -34,6 +34,6 @@ class CrossEntropyLoss(BaseWeightedLoss):
             kwargs.update(dict(weight=torch.tensor(
                 kwargs['weight'], device=cls_scores.device)))
 
-        loss_cls = F.CrossEntropyLoss(cls_scores, labels, **kwargs)
+        loss_cls = F.cross_entropy(cls_scores, labels, **kwargs)
 
         return loss_cls

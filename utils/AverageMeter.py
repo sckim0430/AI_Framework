@@ -5,13 +5,15 @@ from collections import defaultdict
 import torch
 import torch.distributed as dist
 
+
 class AverageMeter(object):
     """The average meter of single value.
 
     Args:
         object (class): The base class.
     """
-    def __init__(self,name=None,prefix='train'):
+
+    def __init__(self, name=None, prefix='train'):
         """The initalization.
 
         Args:
@@ -19,7 +21,7 @@ class AverageMeter(object):
             prefix (str, optional): The prefix. Defaults to 'train'
         """
         self.name = name
-        self.prefix=prefix
+        self.prefix = prefix
         self.reset()
 
     def reset(self):
@@ -48,11 +50,12 @@ class AverageMeter(object):
         Args:
             device (torch.device): The torch device option.
         """
-        if device.type in ('cpu','mps'):
+        if device.type in ['cpu', 'mps']:
             return
 
-        total = torch.tensor([self.sum, self.count], dtype=torch.float32, device=device)
-        dist.all_reduce(total,dist.ReduceOp.SUM, async_op=False)
+        total = torch.tensor([self.sum, self.count],
+                             dtype=torch.float32, device=device)
+        dist.all_reduce(total, dist.ReduceOp.SUM, async_op=False)
         self.sum, self.count = total.tolist()
         self.avg = self.sum / self.count
 
@@ -62,18 +65,16 @@ class AverageMeter(object):
         Returns:
             str: The output string.
         """
-        
+
         avg = self.avg
-        if isinstance(self.avg,torch.tensor):
-            avg =avg.item()
+        if isinstance(self.avg, torch.Tensor):
+            avg = avg.item()
 
         if self.name is None:
-            str_out = '{:.5f}'
-            str_out.format(avg)
+            str_out = '{:.5f}'.format(avg)
         else:
-            str_out = '{}_{} {:.5f}'
-            str_out.format(self.prefix, self.name, avg)
-        
+            str_out = '{}_{} {:.5f}'.format(self.prefix, self.name, avg)
+
         return str_out
 
 
@@ -83,14 +84,16 @@ class MetricMeter(object):
     Args:
         object (class): The base class.
     """
-    def __init__(self, prefix='train', delimiter='\t'):
+
+    def __init__(self, prefix='train', delimiter='  '):
         """The initalization.
 
         Args:
             prefix  (str, optional): The prefix. Defaults to 'train'
-            delimiter (str, optional): The delimiter of dict. Defaults to '\t'.
+            delimiter (str, optional): The delimiter of dict. Defaults to '  '.
         """
-        self.meters = defaultdict(lambda:AverageMeter(name=None,prefix=prefix))
+        self.meters = defaultdict(
+            lambda: AverageMeter(name=None, prefix=prefix))
         self.delimiter = delimiter
 
     def update(self, input_dict):
@@ -111,11 +114,11 @@ class MetricMeter(object):
             )
 
         for k, v in input_dict.items():
-            if isinstance(v, torch.tensor):
+            if isinstance(v, torch.Tensor):
                 v = v.item()
             self.meters[k].update(v)
 
-    def all_reduce(self,device):
+    def all_reduce(self, device):
         """The operation for all reduce.
 
         Args:
