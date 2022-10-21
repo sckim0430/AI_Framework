@@ -60,7 +60,7 @@ def train_sub_module(gpu_id, model_cfg, data_cfg, env_cfg, logger):
     # distribution option
     if is_cuda and env_cfg['distributed']:
         logger.info('Set the rank.')
-        set_rank(env_cfg,gpu_id)
+        set_rank(env_cfg, gpu_id)
 
         logger.info('Initalize the distributed process group.')
         init_process_group(
@@ -236,7 +236,8 @@ def train(data_loader, model, params, optimizer, epoch, device, train_freq=5):
         optimizer.zero_grad()
 
         for k in output:
-            output.update({k: torch.mean(output[k])})
+            if output[k].ndim:
+                output.update({k: torch.mean(output[k])})
 
             if 'loss' in k:
                 output[k].backward()
@@ -291,7 +292,9 @@ def validate(data_loader, model, params, epoch, device, best_evaluation, distrib
                 # get validation params and output[losses, evaluations, .., etc.]
                 output = model(images, targets, return_loss=True, **params)
 
-                print(output)
+                for k in output:
+                    if output[k].ndim:
+                        output.update({k: torch.mean(output[k])})
 
                 # output update
                 metrics.update(output)
