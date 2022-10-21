@@ -77,11 +77,12 @@ def set_world_size(env_cfg):
             {'world_size': env_cfg['ngpus_per_node'] * env_cfg['world_size']})
 
 
-def set_rank(env_cfg):
+def set_rank(env_cfg, gpu_id):
     """The operation for set rank.
 
     Args:
         env_cfg (dict): The environment config.
+        gpu_id (int): The local rank.
     """
     # when dist_url == env://, we refer to environment variable.
     if env_cfg['dist_url'] == 'env://' and env_cfg['rank'] == -1:
@@ -92,7 +93,7 @@ def set_rank(env_cfg):
     # finally, it is changed from the priority of the current node to the priority of the process.
     if env_cfg['multiprocessing_distributed']:
         env_cfg.update(
-            {'rank': env_cfg['rank']*env_cfg['ngpus_per_node']+env_cfg['gpu_id']})
+            {'rank': env_cfg['rank']*env_cfg['ngpus_per_node']+gpu_id})
 
 
 def init_process_group(dist_url, dist_backend, world_size, rank):

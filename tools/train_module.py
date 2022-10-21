@@ -35,7 +35,7 @@ def train_module(model_cfg, data_cfg, env_cfg, logger):
     """
     # run the train module
     if env_cfg['multiprocessing_distributed']:
-        mp.sqawn(train_sub_module, nprocs=env_cfg['ngpus_per_node'], args=(
+        mp.spawn(train_sub_module, nprocs=env_cfg['ngpus_per_node'], args=(
             model_cfg, data_cfg, env_cfg, logger))
     else:
         train_sub_module(None, model_cfg=model_cfg,
@@ -60,7 +60,7 @@ def train_sub_module(gpu_id, model_cfg, data_cfg, env_cfg, logger):
     # distribution option
     if is_cuda and env_cfg['distributed']:
         logger.info('Set the rank.')
-        set_rank(env_cfg)
+        set_rank(env_cfg,gpu_id)
 
         logger.info('Initalize the distributed process group.')
         init_process_group(

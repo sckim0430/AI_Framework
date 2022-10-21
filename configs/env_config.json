@@ -1,11 +1,11 @@
 {
     "seed": null,
     "workers": 4,
-    "multiprocessing_distributed": false,
-    "distributed": false,
-    "ngpus_per_node": -1,
-    "world_size": -1,
-    "rank": -1,
-    "dist_url": "tcp://127.0.0.1",
+    "multiprocessing_distributed": true,
+    "distributed": true,
+    "ngpus_per_node": 2,
+    "world_size": 1,
+    "rank": 0,
+    "dist_url": "tcp://127.0.0.1:12345",
     "dist_backend": "nccl"
 }
