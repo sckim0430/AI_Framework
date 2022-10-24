@@ -128,7 +128,7 @@ class Base_Head(nn.Module, metaclass=ABCMeta):
 
                 if func_name in ["precision_score", "recall_score"]:
                     kwargs['evaluation'][func_name].update(
-                        {'zero_division': 1})
+                        {'zero_division': 0})
 
                     if self.num_class == 2:
                         kwargs['evaluation'][func_name].update(
