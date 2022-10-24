@@ -1,6 +1,7 @@
 """The parse utils implementation.
 """
 
+
 def parse_type(cfg):
     """The operation for parse the type keyword from config.
 
@@ -23,6 +24,7 @@ def parse_type(cfg):
     params = parsed_cfg
 
     return type, params
+
 
 def parse_loss_eval(cfg, mode='train'):
     """The operation for parse the loss and evaluation.
@@ -47,10 +49,9 @@ def parse_loss_eval(cfg, mode='train'):
         if 'head' in key:
             for k in cfg['model'][key]:
                 if 'loss' in k:
-                    output_list.append(k)
+                    ouptut_list.append(k)
 
     for k in cfg['params']['evaluation'][mode]:
-        output_list.append(k)
+        ouptut_list.append(k)
 
-    return output_list    
-
+    return ouptut_list
