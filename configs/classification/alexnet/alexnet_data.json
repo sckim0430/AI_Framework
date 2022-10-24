@@ -6,11 +6,11 @@
     "weight_load": "/workspace/weight/load.pth",
     "log_dir": "/workspace/log/",
     "dummy": true,
-    "batch_size" : 64,
+    "batch_size": 64,
     "epochs": 100,
-    "train_freq":5,
-    "val_freq":5,
+    "train_freq": 5,
+    "val_freq": 5,
     "start_epoch": 0,
     "resume": null,
-    "dataset":"ImageNet"
+    "dataset": "ImageNet"
 }
