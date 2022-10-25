@@ -29,9 +29,6 @@ def check_cfg(model_cfg, data_cfg, env_cfg, mode=True):
             continue
 
         exist_check(["type"], cfg=model_cfg['model'][k])
-
-    print('done.')
-
     # data_cfg check
     print('Check the data config file.')
 
@@ -57,16 +54,11 @@ def check_cfg(model_cfg, data_cfg, env_cfg, mode=True):
         if not data_cfg['dummy'] and "test_dir" not in data_cfg:
             raise ValueError(
                 'The test directory key must be in the config file, and the directory must exist.')
-
-    print('done.')
-
     # env_cfg check
     print('Check the environment config file.')
 
     exist_check(["seed", "workers", "multiprocessing_distributed", "distributed",
                 "ngpus_per_node", "world_size", "rank", "dist_url", "dist_backend"], cfg=env_cfg)
-
-    print('done.')
 
 
 def exist_check(keys, cfg):
