@@ -7,7 +7,7 @@ import argparse
 
 from utils.log import get_logger
 from utils.check import check_cfg
-from utils.environment import set_deterministic_option, set_world_size
+from utils.environment import set_deterministic_option, set_world_size, set_workers
 from tools.train_module import train_module
 
 
@@ -50,18 +50,29 @@ def main():
         env_cfg = json.load(f)
         f.close()
 
-    # build log
-    if not os.path.isdir(data_cfg['log_dir']):
-        os.mkdir(data_cfg['log_dir'])
+    # multiprocessing_distributed is option for multi processing in this node case with 5 and 6.
+    # when world_size>1, then multi node case with 3 and 6 and 7.
+    # distributed is option for multi process(total).
+    env_cfg.update(
+        {'distributed': env_cfg['world_size'] > 1 or env_cfg['multiprocessing_distributed']})
 
-    log_dir = os.path.join(data_cfg['log_dir'], model_cfg['model']['type'])
+    # build log
+    if data_cfg['log_dir'] is not None:
+        log_dir = data_cfg['log_dir']
+    else:
+        log_dir = 'log'
+
+    if not os.path.isdir(log_dir):
+        os.mkdir(log_dir)
+
+    log_dir = os.path.join(log_dir, model_cfg['model']['type'])
 
     if not os.path.isdir(log_dir):
         os.mkdir(log_dir)
 
     log_dir = os.path.join(log_dir, 'train.log')
     logger = get_logger(log_level=1, stream_level=1,
-                        file_level=2, log_dir=log_dir)
+                        file_level=2, log_dir=log_dir, distributed=env_cfg['distributed'])
 
     # check configuration
     logger.info('Check the configuaration files.')
@@ -72,9 +83,10 @@ def main():
         logger.info('Set the deterministic options from seed.')
         set_deterministic_option(env_cfg['seed'])
 
-    # set world size
+    # set world size and workers
     logger.info('Set the world size.')
     set_world_size(env_cfg)
+    set_workers(env_cfg)
 
     # train
     train_module(model_cfg, data_cfg, env_cfg, logger)

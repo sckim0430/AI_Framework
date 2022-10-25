@@ -50,22 +50,23 @@ def set_deterministic_option(seed):
 ##############################################################################################################################
 
 
+def set_workers(env_cfg):
+    """The operation for set the workers.
+
+    Args:
+        env_cfg (dict): The environment config.
+    """
+    if env_cfg['distributed']:
+        env_cfg.update({'workers': int((
+            env_cfg['workers']+env_cfg['ngpus_per_node']-1)/env_cfg['ngpus_per_node'])})
+
+
 def set_world_size(env_cfg):
     """The operation for set the world size.
 
     Args:
         env_cfg (dict): The environment config.
     """
-
-    if env_cfg['dist_url'] == 'env://' and env_cfg['world_size'] == -1:
-        env_cfg.update({'world_size': int(os.environ['WORLD_SIZE'])})
-
-    # multiprocessing_distributed is option for multi processing in this node case with 5 and 6.
-    # when world_size>1, then multi node case with 3 and 6 and 7.
-    # distributed is option for multi process(total).
-    env_cfg.update(
-        {'distributed': env_cfg['world_size'] > 1 or env_cfg['multiprocessing_distributed']})
-
     # ngpus_per_node : gpu number per node
     # we assign 1 process per gpu.
     env_cfg.update({'ngpus_per_node': torch.cuda.device_count()})
@@ -84,10 +85,6 @@ def set_rank(env_cfg, gpu_id):
         env_cfg (dict): The environment config.
         gpu_id (int): The local rank.
     """
-    # when dist_url == env://, we refer to environment variable.
-    if env_cfg['dist_url'] == 'env://' and env_cfg['rank'] == -1:
-        env_cfg.update({'rank': int(os.environ['RANK'])})
-
     # rank means the priority of the current node among all nodes,
     # so, in case with 5 and 6, we redefine rank = rank * ngpus_per_node + gpu_id.
     # finally, it is changed from the priority of the current node to the priority of the process.

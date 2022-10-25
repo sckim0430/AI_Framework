@@ -3,6 +3,7 @@
 from torch.optim import *
 from torchvision.transforms import *
 from torchvision.datasets import *
+from torch.optim.lr_scheduler import *
 
 from models.type import *
 from models.module import *
@@ -14,7 +15,7 @@ def build(cfg, logger=None):
 
     Args:
         cfg (dict): The input config.
-        logger (logging.RootLogger): The logger. Defaults to None.
+        logger (logging.RootLogger|logging.Logger): The logger. Defaults to None.
 
     Returns:
         nn.Module: The sub model object.
@@ -33,7 +34,7 @@ def build_model(cfg, logger=None):
 
     Args:
         cfg (dict): The input config.
-        logger (logging.RootLogger): The logger. Defaults to None.
+        logger (logging.RootLogger|logging.Logger): The logger. Defaults to None.
     Returns:
         nn.Module: The model object.
     """
@@ -44,7 +45,8 @@ def build_model(cfg, logger=None):
     for k in params:
         params.update({k: build(params[k], logger)})
 
-    params.update({'logger': logger})
+    if logger is not None:
+        params.update({'logger': logger})
 
     return eval(type)(**params if params is not None else {})
 
@@ -64,7 +66,23 @@ def build_optimizer(model_parameters, cfg):
     params.update({'params': model_parameters})
 
     # build optimizer
-    return eval(type)(**params if params is not None else {})
+    return eval(type)(**params)
+
+
+def build_scheduler(optimizer, cfg):
+    """The operation for build scheduler.
+
+    Args:
+        optimizer (torch.optim): The optimizer object.
+        cfg (dict): The input config.
+
+    Returns:
+        torch.optim.lr_scheduler: The scheduler object.
+    """
+    type, params = parse_type(cfg)
+    params.update({'optimizer': optimizer})
+
+    return eval(type)(**params)
 
 
 def build_param(cfg, mode='train'):

@@ -19,7 +19,7 @@ class BaseClassification(nn.Module, metaclass=ABCMeta):
             backbone (torch.nn.Module): The feature extractor.
             neck (torch.nn.Module): The feature refinementor.
             cls_head (torch.nn.Module, optional): The classification head. Defaults to None.
-            logger (logging.RootLogger): The logger. Defaults to None.
+            logger (logging.RootLogger|logging.Logger): The logger. Defaults to None.
         """
         super(BaseClassification, self).__init__()
 

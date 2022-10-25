@@ -23,7 +23,7 @@ class AlexNet_Head(Base_Head):
             multi_label (bool, optional): The multi label option. Defaults to False.
             init_weight (bool, optional): The initalization of the weights option. Defaults to True.
             dropout_ratio (float, optional): The dropout ratio. Defaults to 0.5.
-            logger (logging.RootLogger): The logger. Defaults to None.
+            logger (logging.RootLogger|logging.Logger): The logger. Defaults to None.
         """
         super(AlexNet_Head, self).__init__(num_class=num_class, in_size=in_size, in_channel=in_channel,
                                            loss_cls=loss_cls, avg_pooling=avg_pooling, multi_label=multi_label, logger=logger)

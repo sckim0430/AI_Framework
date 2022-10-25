@@ -16,13 +16,13 @@ def check_cfg(model_cfg, data_cfg, env_cfg, mode=True):
     """
     # model_cfg check
     print('Check the model config file.')
-    exist_check(["model", "params", "optimizer", "pipeline"], cfg=model_cfg)
+    exist_check(["model", "params", "optimizer", "scheduler"], cfg=model_cfg)
     exist_check(["type"], cfg=model_cfg['model'])
     exist_check(["evaluation", "loss"], cfg=model_cfg['params'])
     exist_check(["train", "validation", "test"],
                 cfg=model_cfg['params']['evaluation'])
     exist_check(["type"], cfg=model_cfg['optimizer'])
-    exist_check(["train", "validation", "test"], cfg=model_cfg['pipeline'])
+    exist_check(["type"], cfg=model_cfg['scheduler'])
 
     for k in model_cfg['model'].keys():
         if k == "type":
@@ -35,7 +35,8 @@ def check_cfg(model_cfg, data_cfg, env_cfg, mode=True):
     # data_cfg check
     print('Check the data config file.')
 
-    exist_check(["dummy", "batch_size", "log_dir"], cfg=data_cfg)
+    exist_check(["dummy", "batch_size", "log_dir", "pipeline"], cfg=data_cfg)
+    exist_check(["train", "validation", "test"], cfg=data_cfg['pipeline'])
 
     if mode:
         # train check mode
@@ -51,7 +52,7 @@ def check_cfg(model_cfg, data_cfg, env_cfg, mode=True):
 
     else:
         # test check mode
-        exist_check(["weight_load"], cfg=data_cfg)
+        exist_check(["checkpoint"], cfg=data_cfg)
 
         if not data_cfg['dummy'] and "test_dir" not in data_cfg:
             raise ValueError(

@@ -22,7 +22,7 @@ class AlexNet_Backbone(nn.Module):
             lrn_param (list[float], optional): The LRN parameter. Defaults to [5, 1e-4, 0.75, 1.0].
             pretrained (str, optional): The pretrained weight path or None. Defaults to None.
             init_weight (bool, optional): The initalization of the weights option. Defaults to True.
-            logger (logging.RootLogger): The logger. Defaults to None.
+            logger (logging.RootLogger|logging.Logger): The logger. Defaults to None.
         """
         super(AlexNet_Backbone, self).__init__()
         # Setting Param

@@ -3,7 +3,7 @@
     "val_dir": "/ext/Dataset/ILSVRC2012_img_val/",
     "test_dir": "/ext/Dataset/ILSVRC2012_img_test/",
     "weight_dir": "/workspace/weight/",
-    "weight_load": "/workspace/weight/load.pth",
+    "checkpoint": "/workspace/weight/0_checkpoint.pth.tar",
     "log_dir": "/workspace/log/",
     "dummy": true,
     "batch_size": 64,
@@ -12,5 +12,68 @@
     "val_freq": 5,
     "start_epoch": 0,
     "resume": null,
-    "dataset": "ImageNet"
+    "dataset": "ImageNet",
+    "pipeline": {
+        "train": {
+            "RandomResizedCrop": {
+                "size": 227
+            },
+            "RandomHorizontalFlip": null,
+            "ToTensor": null,
+            "Normalize": {
+                "mean": [
+                    0.485,
+                    0.456,
+                    0.406
+                ],
+                "std": [
+                    0.229,
+                    0.224,
+                    0.225
+                ]
+            }
+        },
+        "validation": {
+            "Resize": {
+                "size": 256
+            },
+            "CenterCrop": {
+                "size": 227
+            },
+            "ToTensor": null,
+            "Normalize": {
+                "mean": [
+                    0.485,
+                    0.456,
+                    0.406
+                ],
+                "std": [
+                    0.229,
+                    0.224,
+                    0.225
+                ]
+            }
+        },
+        "test": {
+            "Resize": {
+                "size": 256
+            },
+            "CenterCrop": {
+                "size": 227
+            },
+            "ToTensor": null,
+            "Normalize": {
+                "mean": [
+                    0.485,
+                    0.456,
+                    0.406
+                ],
+                "std": [
+                    0.229,
+                    0.224,
+                    0.225
+                ]
+            }
+        }
+    }
 }

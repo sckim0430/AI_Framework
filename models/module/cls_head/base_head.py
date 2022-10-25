@@ -29,7 +29,7 @@ class Base_Head(nn.Module, metaclass=ABCMeta):
             loss_cls (dict, optional): The classification loss parameter. Defaults to dict(type='CrossEntropyLoss', loss_weight=1.0).
             avg_pooling (bool, optional): The average pooling option for input featrue. Defaults to True.
             multi_label (bool, optional): The multi label option. Defaults to False.
-            logger (logging.RootLogger): The logger. Defaults to None.
+            logger (logging.RootLogger|logging.Logger): The logger. Defaults to None.
 
         Raises:
             ValueError: The number of class should more than 2.
