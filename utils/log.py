@@ -5,7 +5,6 @@ import warnings
 import logging
 import multiprocessing as mp
 
-
 def level_check(level=3):
     """The operation for check log level.
 

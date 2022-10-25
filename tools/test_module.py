@@ -15,29 +15,30 @@ from builds.build import build_model, build_optimizer, build_scheduler, build_pi
 from utils.environment import set_rank, init_process_group, set_device, set_model
 from utils.display import display_test
 from utils.AverageMeter import AverageMeter, MetricMeter
+from utils.log import get_logger
 
 warnings.filterwarnings(action='ignore')
 
 
-def test_module(model_cfg, data_cfg, env_cfg, logger):
+def test_module(model_cfg, data_cfg, env_cfg, log_option):
     """The operation for test module.
 
     Args:
         model_cfg (dict): The model config.
         data_cfg (dict): The data config.
         env_cfg (dict): The environment config.
-        logger (logging.RootLogger|logging.Logger): The logger.
+        log_option (dict): The log option.
     """
     # run the train module
     if env_cfg['multiprocessing_distributed']:
         mp.spawn(test_sub_module, nprocs=env_cfg['ngpus_per_node'], args=(
-            model_cfg, data_cfg, env_cfg, logger))
+            model_cfg, data_cfg, env_cfg, log_option))
     else:
         test_sub_module(None, model_cfg=model_cfg,
-                        data_cfg=data_cfg, env_cfg=env_cfg, logger=logger)
+                        data_cfg=data_cfg, env_cfg=env_cfg, log_option=log_option)
 
 
-def test_sub_module(gpu_id, model_cfg, data_cfg, env_cfg, logger):
+def test_sub_module(gpu_id, model_cfg, data_cfg, env_cfg, log_option):
     """The operation for sub test module.
 
     Args:
@@ -45,8 +46,10 @@ def test_sub_module(gpu_id, model_cfg, data_cfg, env_cfg, logger):
         model_cfg (dict): The model config.
         data_cfg (dict): The data config.
         env_cfg (dict): The environment config.
-        logger (logging.RootLogger|logging.Logger): The logger.
+        log_option (dict): The log option.
     """
+    logger = get_logger(**log_option)
+
     # set the gpu paramters
     logger.info('Set the gpu parameters.')
     is_cuda = torch.cuda.is_available()

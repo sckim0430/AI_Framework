@@ -1,10 +1,12 @@
+"""The test implementation.
+"""
 import os
 import json
 import argparse
 
 from utils.log import get_logger
 from utils.check import check_cfg
-from utils.environment import set_deterministic_option, set_world_size, set_workers
+from utils.environment import set_deterministic_option, set_world_size, set_workers, set_distributed
 from tools.test_module import test_module
 
 
@@ -48,12 +50,6 @@ def main():
         env_cfg = json.load(f)
         f.close()
 
-    # multiprocessing_distributed is option for multi processing in this node case with 5 and 6.
-    # when world_size>1, then multi node case with 3 and 6 and 7.
-    # distributed is option for multi process(total).
-    env_cfg.update(
-        {'distributed': env_cfg['world_size'] > 1 or env_cfg['multiprocessing_distributed']})
-
     # build log
     if data_cfg['log_dir'] is not None:
         log_dir = data_cfg['log_dir']
@@ -69,8 +65,9 @@ def main():
         os.mkdir(log_dir)
 
     log_dir = os.path.join(log_dir, 'test.log')
-    logger = get_logger(log_level=1, stream_level=1,
-                        file_level=2, log_dir=log_dir, distributed=env_cfg['distributed'])
+    log_option = {"log_level": 1, "stream_level": 1,
+                  "file_level": 2, "log_dir": log_dir, "distributed": False}
+    logger = get_logger(**log_option)
 
     # check configuration
     logger.info('Check the configuaration files.')
@@ -81,13 +78,19 @@ def main():
         logger.info('Set the deterministic options from seed.')
         set_deterministic_option(env_cfg['seed'])
 
-    # set world size and workers
+    # set distirbution
+    logger.info('Set the distirbution.')
+    set_distributed(env_cfg)
+    log_option.update({"distributed": env_cfg['distributed']})
+    # set world size
     logger.info('Set the world size.')
     set_world_size(env_cfg)
+    # set workers
+    logger.info('Set the workers.')
     set_workers(env_cfg)
 
     # test
-    test_module(model_cfg, data_cfg, env_cfg, logger)
+    test_module(model_cfg, data_cfg, env_cfg, log_option)
 
 
 if __name__ == '__main__':

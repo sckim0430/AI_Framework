@@ -85,6 +85,35 @@ config files are largely composed of Model / Data / Environment related configur
         "momentum": 0.9,
         "weight_decay": 5e-4
     },
+    "scheduler": {
+        "type": "StepLR",
+        "step_size": 30,
+        "gamma": 0.1
+    }
+}
+```
+
+</details>
+
+<details>
+<summary> Data Config </summary>
+
+```
+{
+    "train_dir": "/ext/Dataset/ILSVRC2012_img_train/ILSVRC2012_img_train",
+    "val_dir": "/ext/Dataset/ILSVRC2012_img_val/",
+    "test_dir": "/ext/Dataset/ILSVRC2012_img_test/",
+    "weight_dir": "/workspace/weight/",
+    "checkpoint": "/workspace/weight/0_checkpoint.pth.tar",
+    "log_dir": "/workspace/log/",
+    "dummy": true,
+    "batch_size": 64,
+    "epochs": 100,
+    "train_freq": 5,
+    "val_freq": 5,
+    "start_epoch": 0,
+    "resume": null,
+    "dataset": "ImageNet",
     "pipeline": {
         "train": {
             "RandomResizedCrop": {
@@ -149,30 +178,6 @@ config files are largely composed of Model / Data / Environment related configur
         }
     }
 }
-```
-
-</details>
-
-<details>
-<summary> Data Config </summary>
-
-```
-{
-    "train_dir": "/ext/Dataset/ILSVRC2012_img_train/ILSVRC2012_img_train",
-    "val_dir": "/ext/Dataset/ILSVRC2012_img_val/",
-    "test_dir": "/ext/Dataset/ILSVRC2012_img_test/",
-    "weight_dir": "/workspace/weight/",
-    "weight_load": "/workspace/weight/load.pth",
-    "log_dir": "/workspace/log/",
-    "dummy": true,
-    "batch_size": 64,
-    "epochs": 100,
-    "train_freq": 5,
-    "val_freq": 5,
-    "start_epoch": 0,
-    "resume": null,
-    "dataset": "ImageNet"
-}
 
 ```
 </details>
@@ -194,7 +199,6 @@ config files are largely composed of Model / Data / Environment related configur
     "dist_backend": "nccl"
 }
 
-
 ```
 
 </details>
@@ -209,20 +213,24 @@ The class or function specified in the config file can be called using the eval 
 <summary> Build </summary>
 
 ```
+"""The build implementation.
+"""
 from torch.optim import *
 from torchvision.transforms import *
 from torchvision.datasets import *
+from torch.optim.lr_scheduler import *
 
 from models.type import *
 from models.module import *
 from utils.parse import parse_type
+
 
 def build(cfg, logger=None):
     """The operation for build.
 
     Args:
         cfg (dict): The input config.
-        logger (logging.RootLogger): The logger. Defaults to None.
+        logger (logging.RootLogger|logging.Logger): The logger. Defaults to None.
 
     Returns:
         nn.Module: The sub model object.
@@ -233,7 +241,7 @@ def build(cfg, logger=None):
     if logger is not None:
         params.update({'logger': logger})
 
-    return eval(type)(**params if params is not None else {}) 
+    return eval(type)(**params if params is not None else {})
 ```
 
 </details>

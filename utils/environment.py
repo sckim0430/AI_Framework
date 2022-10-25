@@ -50,6 +50,16 @@ def set_deterministic_option(seed):
 ##############################################################################################################################
 
 
+def set_distributed(env_cfg):
+    """The operation for distribution.
+
+    Args:
+        env_cfg (dict): The environment config.
+    """
+    env_cfg.update(
+        {'distributed': env_cfg['world_size'] > 1 or env_cfg['multiprocessing_distributed']})
+
+
 def set_workers(env_cfg):
     """The operation for set the workers.
 

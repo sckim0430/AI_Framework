@@ -37,10 +37,13 @@ def save_checkpoint(state, is_best, directory=None, file_name=None):
     if file_name is None:
         file_name = '{}_checkpoint.pth.tar'.format(state['epoch'])
 
-    if directory is not None:
-        if not os.path.isdir(directory):
-            os.mkdir(directory)
-        file_name = os.path.join(directory, file_name)
+    if directory is None:
+        directory = '/weight'
+
+    if not os.path.isdir(directory):
+        os.mkdir(directory)
+
+    file_name = os.path.join(directory, file_name)
 
     torch.save(state, file_name)
 

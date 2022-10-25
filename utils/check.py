@@ -16,28 +16,32 @@ def check_cfg(model_cfg, data_cfg, env_cfg, mode=True):
     """
     # model_cfg check
     print('Check the model config file.')
-    exist_check(["model", "params", "optimizer", "scheduler"], cfg=model_cfg)
-    exist_check(["type"], cfg=model_cfg['model'])
-    exist_check(["evaluation", "loss"], cfg=model_cfg['params'])
-    exist_check(["train", "validation", "test"],
-                cfg=model_cfg['params']['evaluation'])
-    exist_check(["type"], cfg=model_cfg['optimizer'])
-    exist_check(["type"], cfg=model_cfg['scheduler'])
+    check(["model", "params", "optimizer", "scheduler"],
+          [dict, dict, dict, dict], cfg=model_cfg)
+    check(["type"], [str], cfg=model_cfg['model'])
+    check(["evaluation", "loss"], [dict, dict], cfg=model_cfg['params'])
+    check(["train", "validation", "test"], [(dict, type(None)), (dict, type(None)), (dict, type(None))],
+          cfg=model_cfg['params']['evaluation'])
+    check(["type"], [str], cfg=model_cfg['optimizer'])
+    check(["type"], [str], cfg=model_cfg['scheduler'])
 
     for k in model_cfg['model'].keys():
         if k == "type":
             continue
 
-        exist_check(["type"], cfg=model_cfg['model'][k])
+        check(["type"], [str], cfg=model_cfg['model'][k])
     # data_cfg check
     print('Check the data config file.')
 
-    exist_check(["dummy", "batch_size", "log_dir", "pipeline"], cfg=data_cfg)
-    exist_check(["train", "validation", "test"], cfg=data_cfg['pipeline'])
+    check(["dummy", "batch_size", "log_dir", "pipeline"],
+          [bool, int, (str, type(None)), dict], cfg=data_cfg)
+    check(["train", "validation", "test"], [(dict, type(None)), (
+          dict, type(None)), (dict, type(None))], cfg=data_cfg['pipeline'])
 
     if mode:
         # train check mode
-        exist_check(["epochs", "resume", "weight_dir"], cfg=data_cfg)
+        check(["epochs", "resume", "weight_dir"], [
+              int, (str, type(None)), (str, type(None))], cfg=data_cfg)
 
         if data_cfg['resume'] is not None and "start_epoch" not in data_cfg:
             raise ValueError(
@@ -49,7 +53,7 @@ def check_cfg(model_cfg, data_cfg, env_cfg, mode=True):
 
     else:
         # test check mode
-        exist_check(["checkpoint"], cfg=data_cfg)
+        check(["checkpoint"], [str], cfg=data_cfg)
 
         if not data_cfg['dummy'] and "test_dir" not in data_cfg:
             raise ValueError(
@@ -57,23 +61,28 @@ def check_cfg(model_cfg, data_cfg, env_cfg, mode=True):
     # env_cfg check
     print('Check the environment config file.')
 
-    exist_check(["seed", "workers", "multiprocessing_distributed", "distributed",
-                "ngpus_per_node", "world_size", "rank", "dist_url", "dist_backend"], cfg=env_cfg)
+    check(["seed", "workers", "multiprocessing_distributed", "distributed",
+           "ngpus_per_node", "world_size", "rank", "dist_url", "dist_backend"], [(int, type(None)), int, bool, object, object, int, int, str, str], cfg=env_cfg)
 
 
-def exist_check(keys, cfg):
+def check(keys, types, cfg):
     """The operation for check the exist.
 
     Args:
         keys (list[str]): The keys.
+        types (list[class]): The types
         cfg (dict): The config.
 
     Raises:
+        TypeError : If the key type isn't match with cfg keys.
         ValueError: If the key doesn't exist.
     """
-    for k in keys:
+    for k, t in zip(keys, types):
         if k not in cfg:
             raise ValueError('The {} key must be in config.'.format(k))
+
+        if not isinstance(cfg[k], t):
+            raise TypeError('The {} key should be {} Type'.format(k, t))
 
 
 def check_cls_label(cls_scores, labels, num_class, multi_label=False):
