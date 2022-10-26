@@ -90,7 +90,9 @@ def main():
     set_workers(env_cfg)
 
     # train
+    logger.info('Train start.')
     train_module(model_cfg, data_cfg, env_cfg, log_option)
+    logger.info('Train end.')
 
 
 if __name__ == '__main__':

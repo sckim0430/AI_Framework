@@ -90,7 +90,9 @@ def main():
     set_workers(env_cfg)
 
     # test
+    logger.info('Test start.')
     test_module(model_cfg, data_cfg, env_cfg, log_option)
+    logger.info('Test end.')
 
 
 if __name__ == '__main__':

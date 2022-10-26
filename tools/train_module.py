@@ -50,7 +50,13 @@ def train_sub_module(gpu_id, model_cfg, data_cfg, env_cfg, log_option):
         env_cfg (dict): The environment config.
         log_option (dict): The log option.
     """
-    logger = get_logger(**log_option)
+    if gpu_id is None:
+        logger = get_logger(**log_option)
+    else:
+        log_dir = os.path.dirname(log_option['log_dir'])
+        log_option.update({'log_dir': os.path.join(
+            log_dir, 'train_{}.log'.format(gpu_id))})
+        logger = get_logger(**log_option)
 
     # set the gpu paramters
     logger.info('Set the gpu parameters.')

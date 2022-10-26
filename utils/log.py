@@ -5,6 +5,7 @@ import warnings
 import logging
 import multiprocessing as mp
 
+
 def level_check(level=3):
     """The operation for check log level.
 
@@ -57,10 +58,11 @@ def get_logger(log_level=3, stream_level=3, file_level=3, log_dir=None, format='
         logging.RootLogger|logging.Logger: The logger.
     """
     # get logger
-    if distributed:
-        logger = mp.get_logger()
-    else:
-        logger = logging.getLogger()
+    logger = logging.getLogger()
+    # if distributed:
+    #     logger = mp.get_logger()
+    # else:
+    #     logger = logging.getLogger()
 
     # set log level
     level_check(log_level)
